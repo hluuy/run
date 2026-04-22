@@ -16,9 +16,6 @@ export async function POST(request: Request) {
   const { allowed: ipOk } = rateLimit(`otp:ip:${ip}`, 5, 60_000)
   if (!ipOk) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
 
-  // 이메일 기반: 분당 5회
-  const { allowed: emailOk } = rateLimit(`otp:email:${email}`, 5, 60_000)
-  if (!emailOk) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithOtp({
