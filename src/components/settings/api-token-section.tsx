@@ -156,13 +156,13 @@ export function ApiTokenSection() {
                   한 번만 설정하면 이후엔 신경 쓸 필요 없습니다.
                 </p>
 
-                {/* 매직변수 개념 설명 */}
+                {/* 변수 선택 설명 */}
                 <div className="rounded-lg bg-blue-500/8 border border-blue-500/20 p-3 space-y-1.5">
                   <p className="text-xs font-medium text-blue-400">💡 변수 선택이란?</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    단축어 앱에서 값 입력 칸을 탭하면 키보드 위에 <strong className="text-foreground">변수 목록 아이콘</strong>이 나타납니다.
-                    이를 탭하면 운동 데이터(거리, 시간 등)를 직접 선택할 수 있어요.
-                    숫자를 직접 타이핑하는 게 아니라 <strong className="text-foreground">목록에서 고르는 방식</strong>입니다.
+                    값 입력 칸을 탭하면 키보드 위에 <strong className="text-foreground">변수 선택</strong> 버튼이 나타납니다.
+                    이걸 누르면 운동 데이터(거리, 시간 등)를 목록에서 고를 수 있어요.
+                    숫자를 직접 타이핑하는 게 아니라 <strong className="text-foreground">목록에서 선택하는 방식</strong>입니다.
                   </p>
                 </div>
 
@@ -187,25 +187,9 @@ export function ApiTokenSection() {
                 </StepBlock>
 
                 {/* Step 3 */}
-                <StepBlock num="3" icon={<Zap className="h-3.5 w-3.5" />} title="날짜 형식 액션 추가">
+                <StepBlock num="3" icon={<Zap className="h-3.5 w-3.5" />} title="URL 콘텐츠 가져오기 액션 추가">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    액션 검색창에 <Chip>날짜 포맷</Chip>을 입력 →{' '}
-                    <strong className="text-foreground">날짜 포맷 지정</strong> 선택
-                  </p>
-                  <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
-                    <ActionRow label="날짜" value="변수 목록 → 시작 날짜 선택" highlight />
-                    <ActionRow label="형식" value="사용자화 선택 후 아래 입력" />
-                    <div className="px-3 py-2">
-                      <code className="text-[11px] font-mono text-orange-400 bg-muted rounded px-1.5 py-0.5">yyyy-MM-dd</code>
-                      <span className="text-[11px] text-muted-foreground ml-2">(소문자 그대로 입력)</span>
-                    </div>
-                  </div>
-                </StepBlock>
-
-                {/* Step 4 */}
-                <StepBlock num="4" icon={<Zap className="h-3.5 w-3.5" />} title="HTTP 요청 액션 추가">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    검색창에 <Chip>URL 콘텐츠</Chip> 입력 →{' '}
+                    동작 검색에 <Chip>URL 콘텐츠</Chip> 입력 →{' '}
                     <strong className="text-foreground">URL 콘텐츠 가져오기</strong> 선택
                   </p>
                   <div className="rounded-lg bg-red-500/8 border border-red-500/20 p-2.5">
@@ -215,12 +199,10 @@ export function ApiTokenSection() {
                     </p>
                   </div>
 
-                  <p className="text-[11px] font-medium text-muted-foreground pt-1">액션 추가 후 <Chip>표시 옵션</Chip> 또는 <Chip>더 보기</Chip> 탭</p>
-
                   {/* URL */}
                   <div className="rounded-lg border border-border bg-muted/40 text-xs overflow-hidden">
                     <div className="px-3 py-1.5 bg-muted/60 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">URL 입력</div>
-                    <div className="px-3 py-2 font-mono text-[11px] break-all text-foreground select-all">
+                    <div className="px-3 py-2 font-mono text-[11px] break-all text-foreground">
                       https://runstreak-nine.vercel.app/api/runs/sync
                     </div>
                   </div>
@@ -240,25 +222,25 @@ export function ApiTokenSection() {
                   </div>
 
                   {/* JSON Body */}
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <p className="text-[11px] font-medium text-muted-foreground">
-                      본문 → <strong className="text-foreground">JSON</strong> 선택 후 항목 6개 추가
+                      본문 요청 → <strong className="text-foreground">JSON</strong> 선택 후 항목 3개 추가
                     </p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      키는 직접 타이핑, 값은 칸을 탭해 변수 목록에서 선택하세요.
+                      키는 직접 타이핑, 값 칸은 탭 → <strong className="text-foreground">변수 선택</strong> → <strong className="text-foreground">단축어 입력</strong> 에서 고르세요.
                     </p>
                     <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
                       <div className="grid grid-cols-[1fr_1fr] px-3 py-1.5 bg-muted/60">
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">키 (직접 타이핑)</span>
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">값 (목록에서 선택)</span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">단축어 입력에서 선택</span>
                       </div>
-                      <JsonRow k="workout_source_id" v="운동 UUID" note="UUID 또는 식별자" />
-                      <JsonRow k="date" v="시작 날짜" note="운동 시작 시각" />
-                      <JsonRow k="distance_km" v="운동 거리" note="단위가 km인지 확인" />
-                      <JsonRow k="duration_sec" v="운동 시간" note="초(sec) 단위 선택" />
-                      <JsonRow k="avg_heart_rate_bpm" v="평균 심박수" note="없으면 생략 가능" />
-                      <JsonRow k="local_date_key" v="날짜 포맷 결과" note="3번 액션 결과물" highlight />
+                      <JsonRow k="date" v="시작 날짜" note="텍스트 타입" />
+                      <JsonRow k="distance_km" v="거리" note="숫자 타입 · km 단위 확인" />
+                      <JsonRow k="duration_sec" v="시간(초)" note="숫자 타입" />
                     </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      나머지 정보는 서버에서 자동으로 처리합니다.
+                    </p>
                   </div>
                 </StepBlock>
 
