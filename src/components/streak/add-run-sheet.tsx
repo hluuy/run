@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { RunForm } from './run-form'
 import { Plus } from 'lucide-react'
@@ -19,21 +19,19 @@ export function AddRunSheet({ onSuccess }: AddRunSheetProps) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger
-        render={
-          <Button size="sm" className="gap-1.5 bg-orange-500 hover:bg-orange-600 text-white" />
-        }
-      >
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button size="sm" className="gap-1.5 bg-orange-500 hover:bg-orange-600 text-white" />}>
         <Plus className="h-4 w-4" />
         러닝 기록
-      </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl">
-        <SheetHeader className="mb-4">
-          <SheetTitle>러닝 기록하기</SheetTitle>
-        </SheetHeader>
-        <RunForm onSuccess={handleSuccess} />
-      </SheetContent>
-    </Sheet>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm w-full rounded-2xl max-h-[90vh] overflow-y-auto gap-0 p-0">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+          <DialogTitle className="text-base font-bold">러닝 기록하기</DialogTitle>
+        </DialogHeader>
+        <div className="px-5 py-4">
+          <RunForm onSuccess={handleSuccess} />
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
