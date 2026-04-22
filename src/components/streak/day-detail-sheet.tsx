@@ -19,6 +19,7 @@ interface DayDetailSheetProps {
   dayData: DayData | null
   open: boolean
   onClose: () => void
+  onRunAdded?: () => void
 }
 
 function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
