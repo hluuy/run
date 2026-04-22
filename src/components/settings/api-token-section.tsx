@@ -52,26 +52,6 @@ function PathRow({ steps }: { steps: string[] }) {
   )
 }
 
-function ActionRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="grid grid-cols-[80px_1fr] gap-2 px-3 py-2 items-start">
-      <span className="text-muted-foreground text-[11px] pt-px">{label}</span>
-      <span className={`text-[11px] leading-relaxed ${highlight ? 'text-orange-400' : 'text-foreground'}`}>{value}</span>
-    </div>
-  )
-}
-
-function JsonRow({ k, v, note, highlight }: { k: string; v: string; note?: string; highlight?: boolean }) {
-  return (
-    <div className="grid grid-cols-[1fr_1fr] gap-2 px-3 py-2 items-start">
-      <span className="font-mono text-[11px] text-blue-400 break-all">{k}</span>
-      <div>
-        <span className={`text-[11px] leading-relaxed ${highlight ? 'text-orange-400' : 'text-foreground'}`}>{v}</span>
-        {note && <p className="text-[10px] text-muted-foreground mt-0.5">{note}</p>}
-      </div>
-    </div>
-  )
-}
 
 interface TokenInfo {
   id: string
@@ -164,111 +144,70 @@ export function ApiTokenSection() {
                   한 번만 설정하면 이후엔 신경 쓸 필요 없습니다.
                 </p>
 
-                <div className="rounded-lg bg-blue-500/8 border border-blue-500/20 p-3 space-y-1">
-                  <p className="text-xs font-medium text-blue-400">💡 변수 선택이란?</p>
+                {/* Nike Run Club 필수 안내 */}
+                <div className="rounded-lg bg-blue-500/8 border border-blue-500/20 p-3 space-y-2">
+                  <p className="text-xs font-medium text-blue-400">Nike Run Club 필수</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    값 입력 칸을 탭하면 키보드 위에 <strong className="text-foreground">변수 선택</strong> 버튼이 나타납니다. 숫자를 직접 타이핑하는 게 아니라 목록에서 고르는 방식입니다.
+                    이 단축어는 Nike Run Club 데이터를 사용합니다. 아이폰 건강 앱과 연결되어 있어야 합니다.
                   </p>
+                  <PathRow steps={['설정', '건강', '데이터 접근 및 기기', 'Nike Run Club', '모두 활성화']} />
                 </div>
 
                 {/* Step 1 */}
-                <StepBlock num="1" icon={<Key className="h-3.5 w-3.5" />} title="토큰 발급 및 복사">
+                <StepBlock num="1" icon={<Smartphone className="h-3.5 w-3.5" />} title="단축어 다운로드">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    아래 링크에서 단축어를 다운받아 추가하세요.
+                  </p>
+                  <a
+                    href="https://www.icloud.com/shortcuts/d21752a4df084e9682faf20cfd92e24c"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-orange-400 underline underline-offset-2"
+                  >
+                    단축어 다운로드 →
+                  </a>
+                </StepBlock>
+
+                {/* Step 2 */}
+                <StepBlock num="2" icon={<Key className="h-3.5 w-3.5" />} title="토큰 발급 및 복사">
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     이 화면에서 <Chip>발급</Chip> 버튼을 눌러 토큰을 생성하세요. 토큰은 이 기기에 저장되어 언제든 복사할 수 있습니다.
                   </p>
                 </StepBlock>
 
-                {/* Step 2 */}
-                <StepBlock num="2" icon={<Smartphone className="h-3.5 w-3.5" />} title="자동화 트리거 설정">
-                  <PathRow steps={['단축어 앱', '자동화 탭', '+']} />
-                  <PathRow steps={['운동', '달리기 체크', '종료됨 체크', '다음']} />
-                  <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-2.5 mt-1">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      ⚠️ 마지막 화면에서 <strong className="text-foreground">즉시 실행</strong> 선택. "실행 전 확인"으로 두면 매번 허용 버튼을 눌러야 합니다.
-                    </p>
-                  </div>
-                </StepBlock>
-
                 {/* Step 3 */}
-                <StepBlock num="3" icon={<Zap className="h-3.5 w-3.5" />} title="운동 데이터 가져오기">
+                <StepBlock num="3" icon={<Zap className="h-3.5 w-3.5" />} title="단축어에 토큰 입력">
                   <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
-                    동작 검색 → <Chip>운동 찾기</Chip> 추가
+                    다운받은 단축어를 열어 헤더 항목을 수정하세요.
                   </p>
-                  <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
-                    <ActionRow label="종류" value="달리기" />
-                    <ActionRow label="정렬" value="시작일 · 최신 항목순" />
-                    <ActionRow label="제한" value="켜고 1개" />
+                  <div className="rounded-lg border border-border bg-muted/40 text-xs overflow-hidden">
+                    <div className="grid grid-cols-[50px_1fr] gap-1 px-3 py-2 text-[11px]">
+                      <span className="text-muted-foreground">키</span>
+                      <code className="font-mono">Authorization</code>
+                      <span className="text-muted-foreground">값</span>
+                      <span>Bearer <span className="text-orange-400">(여기에 토큰입력하기)</span></span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-1.5">
-                    그 다음 <Chip>목록에서 항목 가져오기</Chip> 추가 → 첫 번째 항목
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+                    <span className="text-orange-400">(여기에 토큰입력하기)</span> 부분을 괄호까지 지우고 복사한 토큰을 붙여넣으세요.
                   </p>
                 </StepBlock>
 
                 {/* Step 4 */}
-                <StepBlock num="4" icon={<Zap className="h-3.5 w-3.5" />} title="날짜 포맷 지정">
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
-                    동작 검색 → <Chip>날짜 포맷 지정</Chip> 추가
+                <StepBlock num="4" icon={<Zap className="h-3.5 w-3.5" />} title="자동화 트리거 설정">
+                  <PathRow steps={['단축어 앱', '자동화 탭', '+']} />
+                  <p className="text-xs text-muted-foreground mt-1.5 mb-1.5">
+                    <strong className="text-foreground">특정 시간</strong>을 선택한 뒤 시각을 지정하세요.
                   </p>
-                  <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
-                    <ActionRow label="날짜" value="위 결과 → 시작일" highlight />
-                    <ActionRow label="형식" value="사용자화" />
-                    <div className="px-3 py-2">
-                      <code className="text-[11px] font-mono text-orange-400 bg-muted rounded px-1.5 py-0.5">{"yyyy-MM-dd'T'HH:mm:ssZ"}</code>
-                    </div>
-                  </div>
-                </StepBlock>
-
-                {/* Step 5 */}
-                <StepBlock num="5" icon={<Zap className="h-3.5 w-3.5" />} title="운동 시간(초) 계산">
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
-                    동작 검색 → <Chip>날짜 간의 시간 측정</Chip> 추가
-                  </p>
-                  <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
-                    <ActionRow label="시작" value="운동 결과 → 시작일" highlight />
-                    <ActionRow label="종료" value="운동 결과 → 종료일" highlight />
-                    <ActionRow label="단위" value="초" />
-                  </div>
-                </StepBlock>
-
-                {/* Step 6 */}
-                <StepBlock num="6" icon={<Zap className="h-3.5 w-3.5" />} title="URL 콘텐츠 가져오기">
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
-                    동작 검색 → <Chip>URL 콘텐츠 가져오기</Chip> 추가
-                  </p>
-                  <div className="rounded-lg bg-red-500/8 border border-red-500/20 p-2.5 mb-2">
-                    <p className="text-[11px] text-muted-foreground">
-                      ⚠️ <strong className="text-foreground">URL 구성요소 가져오기</strong>는 다른 액션입니다.
+                  <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-2.5">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      💡 추천 시각: <strong className="text-foreground">23:30</strong> — 러닝을 거의 하지 않을 시각으로 설정하면 당일 기록이 확실히 반영됩니다.
                     </p>
                   </div>
-                  <div className="rounded-lg border border-border bg-muted/40 text-xs overflow-hidden mb-2">
-                    <div className="px-3 py-1.5 bg-muted/60 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">URL</div>
-                    <div className="px-3 py-2 font-mono text-[11px] break-all text-foreground">
-                      https://runstreak-nine.vercel.app/api/runs/sync
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden mb-2">
-                    <ActionRow label="방법" value="POST" />
-                    <div className="px-3 py-2 space-y-1">
-                      <p className="text-[11px] text-muted-foreground">헤더 추가:</p>
-                      <div className="grid grid-cols-[50px_1fr] gap-1 text-[11px]">
-                        <span className="text-muted-foreground">키</span>
-                        <code className="font-mono">Authorization</code>
-                        <span className="text-muted-foreground">값</span>
-                        <span className="text-orange-400">Bearer 발급받은토큰</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-medium text-muted-foreground">본문 → JSON · 항목 3개 추가</p>
-                    <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border text-xs overflow-hidden">
-                      <div className="grid grid-cols-[1fr_1fr] px-3 py-1.5 bg-muted/60">
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">키</span>
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">값 (변수 선택)</span>
-                      </div>
-                      <JsonRow k="date" v="STEP 4 결과" note="텍스트" />
-                      <JsonRow k="distance_km" v="운동 → 운동 값(km)" note="숫자 · km 단위 확인" highlight />
-                      <JsonRow k="duration_sec" v="STEP 5 결과" note="숫자" />
-                    </div>
+                  <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-2.5 mt-2">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      ⚠️ 마지막 화면에서 <strong className="text-foreground">즉시 실행</strong> 선택. "실행 전 확인"으로 두면 매번 허용 버튼을 눌러야 합니다.
+                    </p>
                   </div>
                 </StepBlock>
 
@@ -276,8 +215,7 @@ export function ApiTokenSection() {
                 <div className="flex items-start gap-2 rounded-lg bg-green-500/10 border border-green-500/20 p-3">
                   <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
                   <div className="text-xs text-muted-foreground leading-relaxed">
-                    설정 완료! 달리기가 끝날 때마다 자동으로 전송됩니다.
-                    중복 전송돼도 자동으로 걸러집니다.
+                    설정 완료! 매일 지정한 시각에 자동으로 당일 러닝 기록이 전송됩니다.
                   </div>
                 </div>
               </div>
