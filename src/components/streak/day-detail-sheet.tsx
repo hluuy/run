@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
 import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const RouteMap = dynamic(() => import('./route-map').then((m) => m.RouteMap), {
   ssr: false,
