@@ -28,9 +28,8 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSendOtp(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email) return
+  async function sendOtp() {
+    if (!email || loading) return
     setLoading('magic')
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -150,23 +149,23 @@ export default function LoginPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            <form onSubmit={handleSendOtp} className="space-y-3">
+            <div className="space-y-3">
               <Input
                 type="email"
                 placeholder="이메일 주소"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                onKeyDown={(e) => e.key === 'Enter' && sendOtp()}
                 className="h-12 border-border bg-card focus-visible:ring-orange-500/30 focus-visible:border-orange-500/50"
               />
               <Button
-                type="submit"
                 className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
-                disabled={loading !== null}
+                onClick={sendOtp}
+                disabled={loading !== null || !email}
               >
                 {loading === 'magic' ? <Loader2 className="h-4 w-4 animate-spin" /> : '이메일로 코드 받기'}
               </Button>
-            </form>
+            </div>
           </div>
         )}
 
