@@ -205,12 +205,13 @@ export function ApiTokenSection() {
                 {/* Step 4 */}
                 <StepBlock num="4" icon={<Zap className="h-3.5 w-3.5" />} title="HTTP 요청 액션 추가">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    검색창에 <Chip>URL의 내용 가져오기</Chip> 입력 후 선택
+                    검색창에 <Chip>URL 콘텐츠</Chip> 입력 →{' '}
+                    <strong className="text-foreground">URL 콘텐츠 가져오기</strong> 선택
                   </p>
                   <div className="rounded-lg bg-red-500/8 border border-red-500/20 p-2.5">
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
                       ⚠️ <strong className="text-foreground">URL 구성요소 가져오기</strong>는 다른 액션입니다.
-                      반드시 <strong className="text-foreground">내용</strong>이 들어간 항목을 선택하세요.
+                      iOS 버전에 따라 <strong className="text-foreground">URL의 내용 가져오기</strong>로 표시되기도 합니다.
                     </p>
                   </div>
 
