@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { formatPace, formatDuration } from '@/lib/streak'
 import { parseGpxFile, type GpxPoint } from '@/lib/gpx'
 import { createClient } from '@/lib/supabase/client'
+import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
-import { Heart, Timer, Zap, MapPin, Loader2 } from 'lucide-react'
+import { Heart, Timer, Zap, MapPin, Loader2, Pencil } from 'lucide-react'
 
 const RouteMap = dynamic(() => import('./route-map').then((m) => m.RouteMap), {
   ssr: false,
@@ -34,7 +36,7 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
-function RunCard({ run, index, total }: { run: Run; index: number; total: number }) {
+function RunCard({ run, index, total, onEdit }: { run: Run; index: number; total: number; onEdit: (run: Run) => void }) {
   const [points, setPoints] = useState<GpxPoint[] | null>(null)
   const [loadingGpx, setLoadingGpx] = useState(false)
   const supabase = createClient()
@@ -60,11 +62,19 @@ function RunCard({ run, index, total }: { run: Run; index: number; total: number
 
   return (
     <div className="space-y-1">
-      {total > 1 && (
-        <p className="text-xs font-medium text-orange-500 mb-2">{index + 1}번째 러닝</p>
-      )}
+      <div className="flex items-center justify-between mb-2">
+        {total > 1
+          ? <p className="text-xs font-medium text-orange-500">{index + 1}번째 러닝</p>
+          : <span />
+        }
+        <button
+          onClick={() => onEdit(run)}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Pencil className="h-3 w-3" />수정
+        </button>
+      </div>
 
-      {/* 지도 */}
       {run.gpx_storage_path && (
         <div className="mb-3 overflow-hidden rounded-xl">
           {loadingGpx ? (
@@ -95,41 +105,62 @@ function RunCard({ run, index, total }: { run: Run; index: number; total: number
   )
 }
 
-export function DayDetailSheet({ dayData, open, onClose }: DayDetailSheetProps) {
+export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetailSheetProps) {
+  const [editingRun, setEditingRun] = useState<Run | null>(null)
+
   if (!dayData) return null
 
   const [, m, d] = dayData.localDateKey.split('-')
   const dateLabel = `${parseInt(m)}월 ${parseInt(d)}일`
   const total = dayData.runs.length
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm w-full rounded-2xl max-h-[85vh] overflow-y-auto gap-0 p-0">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-base font-bold">{dateLabel} 러닝</DialogTitle>
-            {total > 1 && <Badge variant="secondary">{total}회</Badge>}
-          </div>
-          {total > 1 && (
-            <div className="mt-3 rounded-xl bg-orange-500/10 border border-orange-500/20 p-3 flex gap-6">
-              <div>
-                <p className="text-xl font-bold text-orange-500">{dayData.totalDistanceKm.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">총 거리 (km)</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-orange-500">{formatPace(dayData.avgPaceSecPerKm)}</p>
-                <p className="text-xs text-muted-foreground">평균 페이스</p>
-              </div>
-            </div>
-          )}
-        </DialogHeader>
+  function handleEditSuccess() {
+    setEditingRun(null)
+    onRunAdded?.()
+  }
 
-        <div className="px-5 py-4 space-y-5">
-          {dayData.runs.map((run, i) => (
-            <RunCard key={run.id} run={run} index={i} total={total} />
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-w-sm w-full rounded-2xl max-h-[85vh] overflow-y-auto gap-0 p-0">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base font-bold">{dateLabel} 러닝</DialogTitle>
+              {total > 1 && <Badge variant="secondary">{total}회</Badge>}
+            </div>
+            {total > 1 && (
+              <div className="mt-3 rounded-xl bg-orange-500/10 border border-orange-500/20 p-3 flex gap-6">
+                <div>
+                  <p className="text-xl font-bold text-orange-500">{dayData.totalDistanceKm.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">총 거리 (km)</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-orange-500">{formatPace(dayData.avgPaceSecPerKm)}</p>
+                  <p className="text-xs text-muted-foreground">평균 페이스</p>
+                </div>
+              </div>
+            )}
+          </DialogHeader>
+
+          <div className="px-5 py-4 space-y-5">
+            {dayData.runs.map((run, i) => (
+              <RunCard key={run.id} run={run} index={i} total={total} onEdit={setEditingRun} />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 수정 모달 */}
+      <Dialog open={!!editingRun} onOpenChange={(o) => !o && setEditingRun(null)}>
+        <DialogContent className="max-w-sm w-full rounded-2xl max-h-[90vh] overflow-y-auto gap-0 p-0">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+            <DialogTitle className="text-base font-bold">러닝 기록 수정</DialogTitle>
+          </DialogHeader>
+          <div className="px-5 py-4">
+            {editingRun && <RunForm editRun={editingRun} onSuccess={handleEditSuccess} />}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

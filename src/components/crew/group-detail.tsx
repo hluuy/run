@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Share2, Loader2, Target, Flame, CheckCircle2 } from 'lucide-react'
+import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2 } from 'lucide-react'
 import type { Group, LeaderboardEntry } from '@/types'
 
 function getGoalPeriod(goalType: string): { start: string; end: string; label: string } {
@@ -35,10 +35,7 @@ function getGoalPeriod(goalType: string): { start: string; end: string; label: s
 const PERIOD_LABEL: Record<string, string> = { daily: '일간', weekly: '주간', monthly: '월간' }
 
 function MemberCard({
-  entry,
-  isMe,
-  groupId,
-  onGoalSaved,
+  entry, isMe, groupId, onGoalSaved,
 }: {
   entry: LeaderboardEntry
   isMe: boolean
@@ -74,9 +71,9 @@ function MemberCard({
       isMe ? 'border-orange-500/30 bg-orange-500/5' : 'border-border bg-card'
     }`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
-            isMe ? 'bg-orange-500/20 text-orange-500' : 'bg-muted text-muted-foreground'
+            isMe ? 'bg-orange-500/20 text-orange-500' : 'bg-secondary text-secondary-foreground'
           }`}>
             {entry.nickname.charAt(0).toUpperCase()}
           </div>
@@ -86,9 +83,7 @@ function MemberCard({
               {isMe && <span className="ml-1.5 text-[10px] text-orange-500 font-normal">나</span>}
             </p>
             {hasGoal && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                목표 {entry.goal_distance_km}km
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">목표 {entry.goal_distance_km}km</p>
             )}
           </div>
         </div>
@@ -109,19 +104,14 @@ function MemberCard({
         </div>
       </div>
 
-      {/* 목표 설정 폼 (본인만) */}
       {isMe && editingGoal && (
         <div className="flex gap-2">
           <Input
-            type="number"
-            step="0.1"
-            min="0.1"
-            placeholder="목표 거리 (km)"
+            type="number" step="0.1" min="0.1" placeholder="목표 거리 (km)"
             value={goalInput}
             onChange={(e) => setGoalInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && saveGoal()}
-            className="h-8 text-sm"
-            autoFocus
+            className="h-8 text-sm" autoFocus
           />
           <Button size="sm" className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white shrink-0" onClick={saveGoal} disabled={saving}>
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : '저장'}
@@ -129,7 +119,6 @@ function MemberCard({
         </div>
       )}
 
-      {/* 목표 미설정 — 본인 */}
       {!hasGoal && isMe && !editingGoal && (
         <button
           onClick={() => setEditingGoal(true)}
@@ -139,26 +128,27 @@ function MemberCard({
         </button>
       )}
 
-      {/* 목표 미설정 — 타인 */}
       {!hasGoal && !isMe && (
         <p className="text-xs text-muted-foreground text-center py-1">목표 미설정</p>
       )}
 
-      {/* 진행률 */}
       {hasGoal && (
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
             <span className={achieved ? 'text-green-500 font-medium' : 'text-muted-foreground'}>
-              {achieved ? '목표 달성! 🎉' : `${entry.total_km.toFixed(1)}km / ${entry.goal_distance_km}km`}
+              {achieved ? '목표 달성! 🎉' : `${entry.total_km.toFixed(1)} / ${entry.goal_distance_km}km`}
             </span>
             <span className={`font-semibold tabular-nums ${achieved ? 'text-green-500' : 'text-foreground'}`}>
               {Math.round(pct)}%
             </span>
           </div>
-          <Progress
-            value={pct}
-            className={`h-2 ${achieved ? '[&>div]:bg-green-500' : '[&>div]:bg-orange-500'}`}
-          />
+          {/* 커스텀 진행 바 — 어두운 트랙 + 은은한 오렌지 */}
+          <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-orange-500/70'}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -170,6 +160,9 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
   const [myId, setMyId] = useState<string | null>(null)
+  const [isCreator, setIsCreator] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
   async function load() {
@@ -183,11 +176,12 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setMyId(user?.id ?? null))
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setMyId(user?.id ?? null)
+      setIsCreator(user?.id === group.created_by)
+    })
     load()
   }, [group.id])
-
-  const { label } = group.goal_type ? getGoalPeriod(group.goal_type) : { label: '' }
 
   async function shareInvite() {
     setSharing(true)
@@ -208,10 +202,21 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
     }
   }
 
+  async function deleteGroup() {
+    setDeleting(true)
+    const res = await fetch(`/api/groups/${group.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    if (!res.ok) { toast.error('삭제 실패'); return }
+    toast.success(`${group.name} 그룹이 삭제됐습니다.`)
+    onUpdated()
+  }
+
+  const { label } = group.goal_type ? getGoalPeriod(group.goal_type) : { label: '' }
+
   return (
     <div className="space-y-3">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-start justify-between">
         <div>
           <h2 className="font-bold text-base">{group.name}</h2>
           {group.goal_type && (
@@ -220,11 +225,38 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
             </p>
           )}
         </div>
-        <Button size="sm" variant="outline" onClick={shareInvite} disabled={sharing} className="gap-1.5 h-8 text-xs">
-          {sharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
-          초대
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={shareInvite} disabled={sharing} className="gap-1.5 h-8 text-xs">
+            {sharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+            초대
+          </Button>
+          {isCreator && (
+            <Button
+              size="sm" variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* 삭제 확인 */}
+      {confirmDelete && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+          <p className="text-xs text-destructive font-medium">정말 삭제하시겠습니까?</p>
+          <p className="text-xs text-muted-foreground">그룹이 영구 삭제됩니다. 멤버들의 개인 러닝 기록은 유지됩니다.</p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => setConfirmDelete(false)}>
+              취소
+            </Button>
+            <Button size="sm" variant="destructive" className="flex-1 h-7 text-xs" onClick={deleteGroup} disabled={deleting}>
+              {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : '삭제'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* 멤버 카드 */}
       {loading ? (
