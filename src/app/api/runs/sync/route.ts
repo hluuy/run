@@ -5,12 +5,12 @@ import { rateLimit } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const syncSchema = z.object({
-  workout_source_id: z.string().min(1),
+  workout_source_id: z.string().min(1).optional().nullable(),
   date: z.string().datetime({ offset: true }),
   distance_km: z.number().positive().max(300),
   duration_sec: z.number().int().positive(),
   avg_heart_rate_bpm: z.number().int().min(40).max(250).optional().nullable(),
-  local_date_key: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  local_date_key: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 })
 
 export async function POST(request: Request) {
@@ -46,8 +46,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_payload', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm, local_date_key } = parsed.data
+  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm } = parsed.data
   const avg_pace_sec_per_km = duration_sec / distance_km
+
+  // local_date_key: 전송 안 해도 date 기준 KST(UTC+9)로 자동 계산
+  const local_date_key = parsed.data.local_date_key
+    ?? new Date(new Date(date).getTime() + 9 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10)
 
   // 5. DB 삽입 (중복 시 409)
   const supabase = createAdminClient()
