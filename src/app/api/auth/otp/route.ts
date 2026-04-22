@@ -12,12 +12,12 @@ export async function POST(request: Request) {
 
   const { email } = body.data
 
-  // IP 기반: 분당 3회
-  const { allowed: ipOk } = rateLimit(`otp:ip:${ip}`, 3, 60_000)
+  // IP 기반: 분당 5회
+  const { allowed: ipOk } = rateLimit(`otp:ip:${ip}`, 5, 60_000)
   if (!ipOk) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
 
-  // 이메일 기반: 시간당 5회
-  const { allowed: emailOk } = rateLimit(`otp:email:${email}`, 5, 60 * 60_000)
+  // 이메일 기반: 분당 5회
+  const { allowed: emailOk } = rateLimit(`otp:email:${email}`, 5, 60_000)
   if (!emailOk) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
 
   const supabase = await createClient()
