@@ -198,7 +198,7 @@ export function RunForm({ onSuccess }: RunFormProps) {
       <div className="space-y-1.5">
         <Label htmlFor="hr">평균 심박수 <span className="text-muted-foreground">(선택)</span></Label>
         <Input id="hr" type="number" placeholder="148"
-          {...register('avg_heart_rate_bpm', { valueAsNumber: true, setValueAs: v => v === '' || isNaN(Number(v)) ? null : Number(v) })} />
+          {...register('avg_heart_rate_bpm', { setValueAs: (v) => v === '' || v === undefined || v === null ? null : parseInt(v, 10) })} />
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
 
