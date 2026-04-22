@@ -70,24 +70,24 @@ export interface Database {
         Row: {
           id: string
           name: string
-          goal_type: 'daily' | 'weekly' | 'monthly'
-          goal_distance_km: number
+          goal_type: 'daily' | 'weekly' | 'monthly' | null
+          goal_distance_km: number | null
           created_by: string
           created_at: string
         }
         Insert: {
           id?: string
           name: string
-          goal_type: 'daily' | 'weekly' | 'monthly'
-          goal_distance_km: number
+          goal_type?: 'daily' | 'weekly' | 'monthly' | null
+          goal_distance_km?: number | null
           created_by: string
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          goal_type?: 'daily' | 'weekly' | 'monthly'
-          goal_distance_km?: number
+          goal_type?: 'daily' | 'weekly' | 'monthly' | null
+          goal_distance_km?: number | null
           created_by?: string
           created_at?: string
         }

@@ -3,10 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const schema = z.object({
-  name: z.string().min(1).max(30),
+  goal_type: z.enum(['daily', 'weekly', 'monthly']),
+  goal_distance_km: z.number().positive().max(10000),
 })
 
-export async function POST(request: Request) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -14,15 +16,13 @@ export async function POST(request: Request) {
   const body = schema.safeParse(await request.json())
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
-  const { data: group, error } = await supabase
+  const { error } = await supabase
     .from('groups')
-    .insert({ name: body.data.name, created_by: user.id })
-    .select('id')
-    .single()
+    .update(body.data)
+    .eq('id', id)
+    .eq('created_by', user.id)
 
   if (error) return NextResponse.json({ error: 'internal' }, { status: 500 })
 
-  await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id })
-
-  return NextResponse.json({ group_id: group.id }, { status: 201 })
+  return NextResponse.json({ ok: true })
 }

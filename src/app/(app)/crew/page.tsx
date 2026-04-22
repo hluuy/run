@@ -43,7 +43,7 @@ export default function CrewPage() {
             <p className="text-xs text-muted-foreground">그룹을 만들거나 초대 링크로 참여해보세요.</p>
           </div>
         ) : (
-          groups.map((g) => <GroupDetail key={g.id} group={g} />)
+          groups.map((g) => <GroupDetail key={g.id} group={g} onUpdated={fetchGroups} />)
         )}
       </div>
     </div>
