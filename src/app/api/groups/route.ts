@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     .select('id')
     .single()
 
-  if (error) return NextResponse.json({ error: 'internal' }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'internal', detail: error.message }, { status: 500 })
 
   await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id })
 
