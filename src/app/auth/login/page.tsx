@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +11,10 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState<'google' | 'magic' | null>(null)
+  const [otp, setOtp] = useState('')
+  const [loading, setLoading] = useState<'google' | 'magic' | 'verify' | null>(null)
   const [sent, setSent] = useState(false)
   const supabase = createClient()
 
@@ -27,13 +30,13 @@ export default function LoginPage() {
     }
   }
 
-  async function handleMagicLink(e: React.FormEvent) {
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault()
     if (!email) return
     setLoading('magic')
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { shouldCreateUser: true },
     })
     setLoading(null)
     if (error) {
@@ -43,10 +46,31 @@ export default function LoginPage() {
     }
   }
 
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault()
+    if (!otp) return
+    setLoading('verify')
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'email',
+    })
+    if (error) {
+      setLoading(null)
+      toast.error('코드가 올바르지 않습니다.')
+      return
+    }
+    const { data: profile } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', data.user!.id)
+      .maybeSingle()
+    router.push(profile ? '/' : '/onboarding')
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm space-y-8">
-        {/* 헤더 */}
         <div className="space-y-2 text-center">
           <div className="text-4xl">🏃</div>
           <h1 className="text-2xl font-bold tracking-tight">런 트래커</h1>
@@ -54,20 +78,38 @@ export default function LoginPage() {
         </div>
 
         {sent ? (
-          <div className="rounded-xl border border-border bg-card p-6 text-center space-y-2">
-            <div className="text-2xl">📬</div>
-            <p className="font-medium">이메일을 확인하세요</p>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{email}</span>으로<br />
-              로그인 링크를 전송했습니다.
-            </p>
-            <Button variant="ghost" size="sm" onClick={() => setSent(false)} className="mt-2">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-card p-4 text-center space-y-1">
+              <p className="font-medium">이메일을 확인하세요</p>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{email}</span>으로 6자리 코드를 전송했습니다.
+              </p>
+            </div>
+            <form onSubmit={handleVerifyOtp} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="otp">인증 코드</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="123456"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading !== null || otp.length < 6}>
+                {loading === 'verify' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                확인
+              </Button>
+            </form>
+            <Button variant="ghost" size="sm" className="w-full" onClick={() => { setSent(false); setOtp('') }}>
               다른 이메일로 시도
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Google */}
             <Button
               variant="outline"
               className="w-full gap-2"
@@ -93,8 +135,7 @@ export default function LoginPage() {
               <Separator className="flex-1" />
             </div>
 
-            {/* Magic Link */}
-            <form onSubmit={handleMagicLink} className="space-y-3">
+            <form onSubmit={handleSendOtp} className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="email">이메일</Label>
                 <Input
@@ -108,7 +149,7 @@ export default function LoginPage() {
               </div>
               <Button type="submit" className="w-full" disabled={loading !== null}>
                 {loading === 'magic' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                이메일로 로그인 링크 받기
+                이메일로 코드 받기
               </Button>
             </form>
           </div>
