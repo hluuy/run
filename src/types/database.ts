@@ -98,16 +98,19 @@ export interface Database {
           group_id: string
           user_id: string
           joined_at: string
+          goal_distance_km: number | null
         }
         Insert: {
           group_id: string
           user_id: string
           joined_at?: string
+          goal_distance_km?: number | null
         }
         Update: {
           group_id?: string
           user_id?: string
           joined_at?: string
+          goal_distance_km?: number | null
         }
         Relationships: []
       }
@@ -184,7 +187,7 @@ export interface Database {
       }
       get_group_leaderboard: {
         Args: { p_group_id: string; p_start: string; p_end: string }
-        Returns: { user_id: string; nickname: string; total_km: number }[]
+        Returns: { user_id: string; nickname: string; total_km: number; goal_distance_km: number | null }[]
       }
     }
     Enums: Record<never, never>

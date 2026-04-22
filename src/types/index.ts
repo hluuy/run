@@ -19,6 +19,7 @@ export interface LeaderboardEntry {
   user_id: string
   nickname: string
   total_km: number
+  goal_distance_km: number | null
 }
 
 export interface RollingAvg {

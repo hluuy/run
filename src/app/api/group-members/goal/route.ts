@@ -4,11 +4,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const schema = z.object({
-  goal_type: z.enum(['daily', 'weekly', 'monthly']),
+  group_id: z.string().uuid(),
+  goal_distance_km: z.number().positive().max(10000),
 })
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export async function PATCH(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -18,10 +18,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const admin = createAdminClient()
   const { error } = await admin
-    .from('groups')
-    .update(body.data)
-    .eq('id', id)
-    .eq('created_by', user.id)
+    .from('group_members')
+    .update({ goal_distance_km: body.data.goal_distance_km })
+    .eq('group_id', body.data.group_id)
+    .eq('user_id', user.id)
 
   if (error) return NextResponse.json({ error: 'internal' }, { status: 500 })
   return NextResponse.json({ ok: true })

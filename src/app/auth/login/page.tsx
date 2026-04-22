@@ -31,13 +31,16 @@ export default function LoginPage() {
   async function sendOtp() {
     if (!email || loading) return
     setLoading('magic')
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
+    const res = await fetch('/api/auth/otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
     setLoading(null)
-    if (error) {
-      toast.error('이메일 전송 실패: ' + error.message)
+    if (res.status === 429) {
+      toast.error('잠시 후 다시 시도해주세요.')
+    } else if (!res.ok) {
+      toast.error('이메일 전송 실패')
     } else {
       setSent(true)
     }

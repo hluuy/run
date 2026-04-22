@@ -33,7 +33,7 @@ export default function CrewPage() {
         <CreateGroupDialog onCreated={fetchGroups} />
       </div>
 
-      <div className="mx-3 space-y-3 pb-4">
+      <div className="mx-4 space-y-6 pb-6">
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : groups.length === 0 ? (
@@ -43,7 +43,11 @@ export default function CrewPage() {
             <p className="text-xs text-muted-foreground">그룹을 만들거나 초대 링크로 참여해보세요.</p>
           </div>
         ) : (
-          groups.map((g) => <GroupDetail key={g.id} group={g} onUpdated={fetchGroups} />)
+          groups.map((g) => (
+            <div key={g.id} className="rounded-2xl border border-border bg-card/50 p-4 space-y-3">
+              <GroupDetail group={g} onUpdated={fetchGroups} />
+            </div>
+          ))
         )}
       </div>
     </div>

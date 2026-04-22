@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 const schema = z.object({
   name: z.string().min(1).max(30),
+  goal_type: z.enum(['daily', 'weekly', 'monthly']),
 })
 
 export async function POST(request: Request) {
@@ -16,10 +17,9 @@ export async function POST(request: Request) {
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
   const admin = createAdminClient()
-
   const { data: group, error } = await admin
     .from('groups')
-    .insert({ name: body.data.name, created_by: user.id })
+    .insert({ name: body.data.name, goal_type: body.data.goal_type, created_by: user.id })
     .select('id')
     .single()
 
