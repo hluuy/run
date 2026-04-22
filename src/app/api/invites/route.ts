@@ -4,7 +4,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rate-limit'
 
-// 초대 링크 생성
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,7 +12,8 @@ export async function POST(request: Request) {
   const { group_id } = z.object({ group_id: z.string().uuid() }).parse(await request.json())
 
   const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('invites')
     .insert({ group_id, created_by: user.id, expires_at })
     .select('token')
@@ -23,7 +23,6 @@ export async function POST(request: Request) {
   return NextResponse.json({ token: data.token }, { status: 201 })
 }
 
-// 초대 토큰으로 그룹 정보 조회 (로그인 불필요)
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get('token')
   if (!token) return NextResponse.json({ error: 'missing token' }, { status: 400 })
@@ -41,7 +40,6 @@ export async function GET(request: Request) {
   return NextResponse.json({ group: data.groups, group_id: data.group_id })
 }
 
-// 초대 수락 → group_members 삽입
 export async function PUT(request: Request) {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
   const { allowed } = rateLimit(`invite:${ip}`, 5, 10 * 60_000)
@@ -63,7 +61,6 @@ export async function PUT(request: Request) {
   if (!invite || invite.revoked || new Date(invite.expires_at) < new Date() || invite.use_count >= invite.max_uses)
     return NextResponse.json({ error: 'invalid_invite' }, { status: 404 })
 
-  // 이미 멤버인지 확인
   const { data: existing } = await admin
     .from('group_members')
     .select('user_id')
@@ -72,7 +69,7 @@ export async function PUT(request: Request) {
     .maybeSingle()
 
   if (!existing) {
-    await supabase.from('group_members').insert({ group_id: invite.group_id, user_id: user.id })
+    await admin.from('group_members').insert({ group_id: invite.group_id, user_id: user.id })
     await admin.from('invites').update({ use_count: invite.use_count + 1 }).eq('id', invite.id)
   }
 

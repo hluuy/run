@@ -3,13 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateRawToken, hashToken } from '@/lib/api-token'
 
-// 현재 토큰 목록 조회
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('api_tokens')
     .select('id, created_at, last_used_at')
     .eq('user_id', user.id)
@@ -18,7 +18,6 @@ export async function GET() {
   return NextResponse.json({ tokens: data ?? [] })
 }
 
-// 새 토큰 발급 (원문은 응답에 1회만 포함)
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -39,7 +38,6 @@ export async function POST() {
   return NextResponse.json({ id: data.id, token: raw, created_at: data.created_at }, { status: 201 })
 }
 
-// 토큰 삭제
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -49,7 +47,8 @@ export async function DELETE(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  await supabase.from('api_tokens').delete().eq('id', id).eq('user_id', user.id)
+  const admin = createAdminClient()
+  await admin.from('api_tokens').delete().eq('id', id).eq('user_id', user.id)
 
   return NextResponse.json({ ok: true })
 }

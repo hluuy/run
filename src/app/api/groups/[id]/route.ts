@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -16,7 +17,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = schema.safeParse(await request.json())
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('groups')
     .update(body.data)
     .eq('id', id)

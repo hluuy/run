@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -14,7 +15,9 @@ export async function POST(request: Request) {
   const body = schema.safeParse(await request.json())
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
-  const { data: group, error } = await supabase
+  const admin = createAdminClient()
+
+  const { data: group, error } = await admin
     .from('groups')
     .insert({ name: body.data.name, created_by: user.id })
     .select('id')
@@ -22,7 +25,7 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: 'internal', detail: error.message }, { status: 500 })
 
-  await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id })
+  await admin.from('group_members').insert({ group_id: group.id, user_id: user.id })
 
   return NextResponse.json({ group_id: group.id }, { status: 201 })
 }
