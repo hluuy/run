@@ -52,8 +52,11 @@ SUPABASE_SERVICE_ROLE_KEY=
 ## 다음 작업
 
 ### 1순위
-- [ ] **토큰 다이얼로그 수정** — Shortcuts 도움말 다이얼로그에 단축어 앱 링크 삽입
-  - 파일: `src/components/settings/api-token-section.tsx`
+- [x] **토큰 다이얼로그 수정** — Shortcuts 도움말 다이얼로그 개편 완료
+  - Nike Run Club 필수 안내 + 건강 앱 연결 경로
+  - 단축어 다운로드 링크 삽입
+  - Authorization 헤더 토큰 입력 방법 안내
+  - 자동화 트리거 특정 시간(23:30 추천)으로 변경
 
 ### 이후 작업
 - [ ] 계정 삭제 기능
