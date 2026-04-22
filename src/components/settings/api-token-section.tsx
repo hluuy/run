@@ -79,13 +79,16 @@ interface TokenInfo {
   last_used_at: string | null
 }
 
+const STORAGE_KEY = 'rnt_saved_token'
+
 export function ApiTokenSection() {
   const [tokens, setTokens] = useState<TokenInfo[]>([])
-  const [newToken, setNewToken] = useState<string | null>(null)
+  const [savedToken, setSavedToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
 
   useEffect(() => {
+    setSavedToken(localStorage.getItem(STORAGE_KEY))
     fetch('/api/tokens')
       .then((r) => r.json())
       .then(({ tokens }) => setTokens(tokens ?? []))
@@ -100,15 +103,20 @@ export function ApiTokenSection() {
 
     if (!res.ok) { toast.error('토큰 생성 실패'); return }
 
-    setNewToken(data.token)
+    localStorage.setItem(STORAGE_KEY, data.token)
+    setSavedToken(data.token)
     setTokens((prev) => [{ id: data.id, created_at: data.created_at, last_used_at: null }, ...prev])
-    toast.success('토큰이 생성됐습니다. 지금 복사해두세요!')
+    toast.success('토큰이 생성됐습니다!')
   }
 
   async function deleteToken(id: string) {
     const res = await fetch(`/api/tokens?id=${id}`, { method: 'DELETE' })
     if (res.ok) {
       setTokens((prev) => prev.filter((t) => t.id !== id))
+      if (tokens.length <= 1) {
+        localStorage.removeItem(STORAGE_KEY)
+        setSavedToken(null)
+      }
       toast.success('토큰이 삭제됐습니다.')
     } else {
       toast.error('삭제 실패')
@@ -116,8 +124,8 @@ export function ApiTokenSection() {
   }
 
   function copyToken() {
-    if (!newToken) return
-    navigator.clipboard.writeText(newToken)
+    if (!savedToken) return
+    navigator.clipboard.writeText(savedToken)
     toast.success('클립보드에 복사됐습니다.')
   }
 
@@ -166,7 +174,7 @@ export function ApiTokenSection() {
                 {/* Step 1 */}
                 <StepBlock num="1" icon={<Key className="h-3.5 w-3.5" />} title="토큰 발급 및 복사">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    이 화면에서 <Chip>발급</Chip> 버튼을 눌러 토큰을 생성하고 즉시 복사하세요. 토큰은 1회만 표시됩니다.
+                    이 화면에서 <Chip>발급</Chip> 버튼을 눌러 토큰을 생성하세요. 토큰은 이 기기에 저장되어 언제든 복사할 수 있습니다.
                   </p>
                 </StepBlock>
 
@@ -282,16 +290,16 @@ export function ApiTokenSection() {
         </Button>
       </div>
 
-      {/* 새로 발급된 토큰 — 1회만 노출 */}
-      {newToken && (
+      {/* 저장된 토큰 — 언제든 복사 가능 */}
+      {savedToken && (
         <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Badge className="bg-orange-500 text-white text-[10px]">새 토큰</Badge>
-            <p className="text-xs text-muted-foreground">지금 복사하세요 — 다시 볼 수 없습니다.</p>
+            <Badge className="bg-orange-500 text-white text-[10px]">API 토큰</Badge>
+            <p className="text-xs text-muted-foreground">Shortcuts 연동에 사용하는 토큰입니다.</p>
           </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded bg-muted px-2 py-1.5 text-xs font-mono break-all">
-              {newToken}
+              {savedToken}
             </code>
             <Button size="icon" variant="ghost" onClick={copyToken} className="shrink-0">
               <Copy className="h-4 w-4" />
