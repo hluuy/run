@@ -14,7 +14,6 @@ export async function POST(request: Request) {
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,
-    options: { shouldCreateUser: true },
   })
 
   if (error || !data?.properties?.hashed_token) {
