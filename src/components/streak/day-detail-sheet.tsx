@@ -10,7 +10,7 @@ import { parseGpxFile, type GpxPoint } from '@/lib/gpx'
 import { createClient } from '@/lib/supabase/client'
 import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
-import { Heart, Timer, Zap, MapPin, Loader2, Pencil } from 'lucide-react'
+import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2 } from 'lucide-react'
 
 const RouteMap = dynamic(() => import('./route-map').then((m) => m.RouteMap), {
   ssr: false,
@@ -36,9 +36,15 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
-function RunCard({ run, index, total, onEdit }: { run: Run; index: number; total: number; onEdit: (run: Run) => void }) {
+function RunCard({ run, index, total, onEdit, onDeleted }: {
+  run: Run; index: number; total: number
+  onEdit: (run: Run) => void
+  onDeleted: () => void
+}) {
   const [points, setPoints] = useState<GpxPoint[] | null>(null)
   const [loadingGpx, setLoadingGpx] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -60,6 +66,15 @@ function RunCard({ run, index, total, onEdit }: { run: Run; index: number; total
       })
   }, [run.gpx_storage_path])
 
+  async function deleteRun() {
+    setDeleting(true)
+    const res = await fetch(`/api/runs/${run.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    if (!res.ok) { toast.error('삭제 실패'); return }
+    toast.success('기록이 삭제됐습니다.')
+    onDeleted()
+  }
+
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between mb-2">
@@ -67,13 +82,35 @@ function RunCard({ run, index, total, onEdit }: { run: Run; index: number; total
           ? <p className="text-xs font-medium text-orange-500">{index + 1}번째 러닝</p>
           : <span />
         }
-        <button
-          onClick={() => onEdit(run)}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Pencil className="h-3 w-3" />수정
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onEdit(run)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil className="h-3 w-3" />수정
+          </button>
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3 w-3" />삭제
+          </button>
+        </div>
       </div>
+
+      {confirmDelete && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-2 mb-2">
+          <p className="text-xs text-destructive font-medium">이 기록을 삭제할까요?</p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => setConfirmDelete(false)}>
+              취소
+            </Button>
+            <Button size="sm" variant="destructive" className="flex-1 h-7 text-xs" onClick={deleteRun} disabled={deleting}>
+              {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : '삭제'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {run.gpx_storage_path && (
         <div className="mb-3 overflow-hidden rounded-xl">
@@ -144,7 +181,11 @@ export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetail
 
           <div className="px-5 py-4 space-y-5">
             {dayData.runs.map((run, i) => (
-              <RunCard key={run.id} run={run} index={i} total={total} onEdit={setEditingRun} />
+              <RunCard
+                key={run.id} run={run} index={i} total={total}
+                onEdit={setEditingRun}
+                onDeleted={() => { onRunAdded?.(); onClose() }}
+              />
             ))}
           </div>
         </DialogContent>
