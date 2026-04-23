@@ -125,9 +125,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;
+    overflow-x: hidden;
   }
   /* iOS Safari 자동 화면 확대 방지 */
   input, select, textarea {

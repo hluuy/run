@@ -67,7 +67,7 @@ export function WheelPicker({ items, selectedIndex, onChange, className }: Wheel
       <div
         ref={ref}
         className="absolute inset-0 overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ scrollSnapType: 'y mandatory' }}
+        style={{ scrollSnapType: 'y mandatory', touchAction: 'pan-y' }}
         onScroll={onScroll}
       >
         <div style={{ paddingTop: WHEEL_PAD, paddingBottom: WHEEL_PAD }}>
