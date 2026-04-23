@@ -9,6 +9,34 @@ import { toast } from 'sonner'
 import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2 } from 'lucide-react'
 import type { Group, LeaderboardEntry } from '@/types'
 
+function getPreviousPeriod(goalType: string): { start: string; end: string } {
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const toKey = (d: Date) => d.toISOString().slice(0, 10)
+
+  if (goalType === 'daily') {
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+    const key = toKey(yesterday)
+    return { start: key, end: key }
+  }
+  if (goalType === 'weekly') {
+    const day = now.getDay()
+    const thisSun = new Date(now); thisSun.setDate(now.getDate() - day)
+    const lastSat = new Date(thisSun); lastSat.setDate(thisSun.getDate() - 1)
+    const lastSun = new Date(lastSat); lastSun.setDate(lastSat.getDate() - 6)
+    return { start: toKey(lastSun), end: toKey(lastSat) }
+  }
+  // monthly: 저번 달
+  const prevFirst = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const py = prevFirst.getFullYear()
+  const pm = prevFirst.getMonth() + 1
+  const lastDay = new Date(py, pm, 0).getDate()
+  return {
+    start: `${py}-${String(pm).padStart(2, '0')}-01`,
+    end: `${py}-${String(pm).padStart(2, '0')}-${lastDay}`,
+  }
+}
+
 function getGoalPeriod(goalType: string): { start: string; end: string; label: string } {
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
   const toKey = (d: Date) => d.toISOString().slice(0, 10)
@@ -35,12 +63,13 @@ function getGoalPeriod(goalType: string): { start: string; end: string; label: s
 const PERIOD_LABEL: Record<string, string> = { daily: '일간', weekly: '주간', monthly: '월간' }
 
 function MemberCard({
-  entry, isMe, groupId, onGoalSaved,
+  entry, isMe, groupId, onGoalSaved, prevKm,
 }: {
   entry: LeaderboardEntry
   isMe: boolean
   groupId: string
   onGoalSaved: () => void
+  prevKm: number
 }) {
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState(String(entry.goal_distance_km ?? ''))
@@ -84,6 +113,11 @@ function MemberCard({
             </p>
             {hasGoal && (
               <p className="text-xs text-muted-foreground mt-0.5">목표 {entry.goal_distance_km}km</p>
+            )}
+            {hasGoal && (
+              <p className={`text-[10px] mt-0.5 font-medium ${prevKm >= entry.goal_distance_km! ? 'text-green-500' : 'text-muted-foreground/50'}`}>
+                {prevKm >= entry.goal_distance_km! ? '✓ 저번 목표 달성' : '✗ 저번 목표 미달성'}
+              </p>
             )}
           </div>
         </div>
@@ -157,6 +191,7 @@ function MemberCard({
 
 export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () => void }) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [prevKmMap, setPrevKmMap] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
   const [myId, setMyId] = useState<string | null>(null)
@@ -168,10 +203,20 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   async function load() {
     if (!group.goal_type) { setLoading(false); return }
     const { start, end } = getGoalPeriod(group.goal_type)
-    const { data } = await supabase.rpc('get_group_leaderboard', {
-      p_group_id: group.id, p_start: start, p_end: end,
-    })
-    setLeaderboard((data as LeaderboardEntry[]) ?? [])
+    const { start: prevStart, end: prevEnd } = getPreviousPeriod(group.goal_type)
+
+    const [{ data: currData }, { data: prevData }] = await Promise.all([
+      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: start, p_end: end }),
+      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: prevStart, p_end: prevEnd }),
+    ])
+
+    setLeaderboard((currData as LeaderboardEntry[]) ?? [])
+
+    const pm = new Map<string, number>()
+    for (const e of ((prevData as LeaderboardEntry[]) ?? [])) {
+      pm.set(e.user_id, e.total_km)
+    }
+    setPrevKmMap(pm)
     setLoading(false)
   }
 
@@ -274,6 +319,7 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
               isMe={entry.user_id === myId}
               groupId={group.id}
               onGoalSaved={() => { setLoading(true); load() }}
+              prevKm={prevKmMap.get(entry.user_id) ?? 0}
             />
           ))}
         </div>

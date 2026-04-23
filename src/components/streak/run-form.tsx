@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { WheelPicker } from '@/components/ui/wheel-picker'
+import { DatePickerSheet } from '@/components/ui/date-picker-sheet'
 import { toast } from 'sonner'
 import { Loader2, Paperclip, X } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
@@ -66,11 +67,14 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<RunFormValues>({
     resolver: zodResolver(runSchema),
     defaultValues,
   })
+
+  const dateValue = watch('date')
 
   // 피커 값 → 폼 동기화
   useEffect(() => {
@@ -191,8 +195,12 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-4">
       {/* 날짜 */}
       <div className="space-y-1.5">
-        <Label htmlFor="date">날짜</Label>
-        <Input id="date" type="date" {...register('date')} max={todayKST()} />
+        <Label>날짜</Label>
+        <DatePickerSheet
+          value={dateValue}
+          onChange={(v) => setValue('date', v, { shouldValidate: true })}
+          max={todayKST()}
+        />
         {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
       </div>
 
