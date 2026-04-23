@@ -7,9 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { WheelPicker } from '@/components/ui/wheel-picker'
 import { toast } from 'sonner'
 import { Loader2, Paperclip, X } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { parseGpxFile, validateGpxFile } from '@/lib/gpx'
 import type { Run } from '@/types'
 
@@ -22,6 +23,15 @@ function todayKST() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
+// 거리: 0~99 정수, .00~.99 소수
+const INT_ITEMS  = Array.from({ length: 100 }, (_, i) => String(i))
+const DEC_ITEMS  = Array.from({ length: 100 }, (_, i) => `.${String(i).padStart(2, '0')}`)
+
+// 시간: 시/분/초
+const HOUR_ITEMS = Array.from({ length: 24 }, (_, i) => `${i}h`)
+const MIN_ITEMS  = Array.from({ length: 60 }, (_, i) => `${i}m`)
+const SEC_ITEMS  = Array.from({ length: 60 }, (_, i) => `${i}s`)
+
 export function RunForm({ onSuccess, editRun }: RunFormProps) {
   const [loading, setLoading] = useState(false)
   const [gpxFile, setGpxFile] = useState<File | null>(null)
@@ -29,6 +39,16 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const isEdit = !!editRun
+
+  // 거리 피커 상태
+  const initKm = editRun?.distance_km ?? 5.00
+  const [distInt, setDistInt] = useState(Math.floor(initKm))
+  const [distDec, setDistDec] = useState(Math.round((initKm % 1) * 100))
+
+  // 시간 피커 상태
+  const [pickHours,   setPickHours]   = useState(editRun ? Math.floor(editRun.duration_sec / 3600) : 0)
+  const [pickMinutes, setPickMinutes] = useState(editRun ? Math.floor((editRun.duration_sec % 3600) / 60) : 0)
+  const [pickSeconds, setPickSeconds] = useState(editRun ? editRun.duration_sec % 60 : 0)
 
   const defaultValues: Partial<RunFormValues> = isEdit
     ? {
@@ -52,6 +72,17 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     defaultValues,
   })
 
+  // 피커 값 → 폼 동기화
+  useEffect(() => {
+    setValue('distance_km', distInt + distDec / 100)
+  }, [distInt, distDec, setValue])
+
+  useEffect(() => {
+    setValue('hours',   pickHours)
+    setValue('minutes', pickMinutes)
+    setValue('seconds', pickSeconds)
+  }, [pickHours, pickMinutes, pickSeconds, setValue])
+
   async function handleGpxSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -61,11 +92,16 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     try {
       const xml = await file.text()
       const parsed = parseGpxFile(xml)
-      setValue('distance_km', Math.round(parsed.distanceKm * 100) / 100)
+      const km = Math.round(parsed.distanceKm * 100) / 100
+      setDistInt(Math.floor(km))
+      setDistDec(Math.round((km % 1) * 100))
+      setValue('distance_km', km)
       if (parsed.durationSec) {
-        setValue('hours', Math.floor(parsed.durationSec / 3600))
-        setValue('minutes', Math.floor((parsed.durationSec % 3600) / 60))
-        setValue('seconds', parsed.durationSec % 60)
+        const h = Math.floor(parsed.durationSec / 3600)
+        const m = Math.floor((parsed.durationSec % 3600) / 60)
+        const s = parsed.durationSec % 60
+        setPickHours(h); setPickMinutes(m); setPickSeconds(s)
+        setValue('hours', h); setValue('minutes', m); setValue('seconds', s)
       }
       if (parsed.avgHeartRate) setValue('avg_heart_rate_bpm', parsed.avgHeartRate)
       setGpxAutoFilled(true)
@@ -145,24 +181,27 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     setLoading(false)
     toast.success('러닝이 기록됐습니다! 🏃')
     reset({ date: todayKST(), hours: 0, minutes: 0, seconds: 0, avg_heart_rate_bpm: null })
-    setGpxFile(null)
-    setGpxAutoFilled(false)
+    setDistInt(5); setDistDec(0)
+    setPickHours(0); setPickMinutes(0); setPickSeconds(0)
+    setGpxFile(null); setGpxAutoFilled(false)
     onSuccess?.()
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-4">
+      {/* 날짜 */}
       <div className="space-y-1.5">
         <Label htmlFor="date">날짜</Label>
         <Input id="date" type="date" {...register('date')} max={todayKST()} />
         {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
       </div>
 
+      {/* GPX */}
       {!isEdit && (
         <div className="space-y-1.5">
           <Label>GPX 파일 <span className="text-muted-foreground">(선택 — 자동으로 스탯 입력)</span></Label>
           {gpxFile ? (
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2">
               <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-sm flex-1 truncate">{gpxFile.name}</span>
               {gpxAutoFilled && <span className="text-xs text-primary shrink-0">자동 입력됨</span>}
@@ -183,37 +222,31 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="distance">거리 (km)</Label>
-        <Input id="distance" type="number" step="0.01" placeholder="5.00"
-          {...register('distance_km', { valueAsNumber: true })} />
+      {/* 거리 피커 */}
+      <div className="space-y-2">
+        <Label>거리</Label>
+        <div className="flex items-center gap-1 rounded-2xl border border-border overflow-hidden bg-secondary/30">
+          <WheelPicker items={INT_ITEMS} selectedIndex={distInt} onChange={setDistInt} />
+          <WheelPicker items={DEC_ITEMS} selectedIndex={distDec} onChange={setDistDec} />
+          <div className="flex-none flex items-center justify-center w-14 text-sm font-semibold text-muted-foreground">
+            km
+          </div>
+        </div>
         {errors.distance_km && <p className="text-xs text-destructive">{errors.distance_km.message}</p>}
       </div>
 
-      <div className="space-y-1.5">
+      {/* 소요시간 피커 */}
+      <div className="space-y-2">
         <Label>소요시간</Label>
-        <div className="flex items-center gap-1.5">
-          {[
-            { field: 'hours' as const, max: 23, placeholder: '0', label: '시' },
-            { field: 'minutes' as const, max: 59, placeholder: '30', label: '분' },
-            { field: 'seconds' as const, max: 59, placeholder: '00', label: '초' },
-          ].map(({ field, max, placeholder, label }, idx) => (
-            <div key={field} className="flex items-center gap-1.5 flex-1">
-              {idx > 0 && <span className="text-muted-foreground font-bold shrink-0">:</span>}
-              <div className="flex-1">
-                <div className="relative">
-                  <Input type="number" min={0} max={max} placeholder={placeholder}
-                    className="pr-5 text-center"
-                    {...register(field, { valueAsNumber: true })} />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">{label}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center gap-1 rounded-2xl border border-border overflow-hidden bg-secondary/30">
+          <WheelPicker items={HOUR_ITEMS} selectedIndex={pickHours}   onChange={setPickHours} />
+          <WheelPicker items={MIN_ITEMS}  selectedIndex={pickMinutes} onChange={setPickMinutes} />
+          <WheelPicker items={SEC_ITEMS}  selectedIndex={pickSeconds} onChange={setPickSeconds} />
         </div>
         {errors.minutes && <p className="text-xs text-destructive">{errors.minutes.message}</p>}
       </div>
 
+      {/* 평균 심박수 */}
       <div className="space-y-1.5">
         <Label htmlFor="hr">평균 심박수 <span className="text-muted-foreground">(선택)</span></Label>
         <Input id="hr" type="number" placeholder="148"
@@ -221,7 +254,11 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" disabled={loading}>
+      <Button
+        type="submit"
+        className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+        disabled={loading}
+      >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isEdit ? '수정 저장' : '기록 저장'}
       </Button>
