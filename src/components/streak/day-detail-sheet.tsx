@@ -80,7 +80,7 @@ function RunCard({ run, index, total, onEdit, onDeleted }: {
     <div className="space-y-1">
       <div className="flex items-center justify-between mb-2">
         {total > 1
-          ? <p className="text-xs font-medium text-orange-500">{index + 1}번째 러닝</p>
+          ? <p className="text-xs font-medium text-primary">{index + 1}번째 러닝</p>
           : <span />
         }
         <div className="flex items-center gap-3">
@@ -167,13 +167,13 @@ export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetail
               {total > 1 && <Badge variant="secondary">{total}회</Badge>}
             </div>
             {total > 1 && (
-              <div className="mt-3 rounded-xl bg-orange-500/10 border border-orange-500/20 p-3 flex gap-6">
+              <div className="mt-3 rounded-xl bg-primary/10 border border-primary/20 p-3 flex gap-6">
                 <div>
-                  <p className="text-xl font-bold text-orange-500">{dayData.totalDistanceKm.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-primary">{dayData.totalDistanceKm.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">총 거리 (km)</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-orange-500">{formatPace(dayData.avgPaceSecPerKm)}</p>
+                  <p className="text-xl font-bold text-primary">{formatPace(dayData.avgPaceSecPerKm)}</p>
                   <p className="text-xs text-muted-foreground">평균 페이스</p>
                 </div>
               </div>

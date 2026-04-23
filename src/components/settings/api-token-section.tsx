@@ -23,7 +23,7 @@ function StepBlock({ num, icon, title, children }: {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 font-medium text-sm">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/15 text-orange-500 text-[10px] font-bold shrink-0">{num}</span>
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">{num}</span>
         <span className="flex items-center gap-1.5">{icon}{title}</span>
       </div>
       <div className="ml-7 space-y-2">{children}</div>
@@ -133,7 +133,7 @@ export function ApiTokenSection() {
             <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4 text-orange-500" />
+                  <Smartphone className="h-4 w-4 text-primary" />
                   iOS Shortcuts 연동 방법
                 </DialogTitle>
               </DialogHeader>
@@ -162,7 +162,7 @@ export function ApiTokenSection() {
                     href="https://www.icloud.com/shortcuts/d21752a4df084e9682faf20cfd92e24c"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-orange-400 underline underline-offset-2"
+                    className="inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2"
                   >
                     단축어 다운로드 →
                   </a>
@@ -185,11 +185,11 @@ export function ApiTokenSection() {
                       <span className="text-muted-foreground">키</span>
                       <code className="font-mono">Authorization</code>
                       <span className="text-muted-foreground">값</span>
-                      <span>Bearer <span className="text-orange-400">(여기에 토큰입력하기)</span></span>
+                      <span>Bearer <span className="text-primary">(여기에 토큰입력하기)</span></span>
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
-                    <span className="text-orange-400">(여기에 토큰입력하기)</span> 부분을 괄호까지 지우고 복사한 토큰을 붙여넣으세요.
+                    <span className="text-primary">(여기에 토큰입력하기)</span> 부분을 괄호까지 지우고 복사한 토큰을 붙여넣으세요.
                   </p>
                 </StepBlock>
 
@@ -230,9 +230,9 @@ export function ApiTokenSection() {
 
       {/* 저장된 토큰 — 언제든 복사 가능 */}
       {savedToken && (
-        <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4 space-y-2">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Badge className="bg-orange-500 text-white text-[10px]">API 토큰</Badge>
+            <Badge className="bg-primary text-primary-foreground text-[10px]">API 토큰</Badge>
             <p className="text-xs text-muted-foreground">Shortcuts 연동에 사용하는 토큰입니다.</p>
           </div>
           <div className="flex items-center gap-2">

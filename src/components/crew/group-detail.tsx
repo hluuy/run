@@ -68,19 +68,19 @@ function MemberCard({
 
   return (
     <div className={`rounded-2xl border p-4 space-y-3 transition-colors ${
-      isMe ? 'border-orange-500/30 bg-orange-500/5' : 'border-border bg-card'
+      isMe ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'
     }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
-            isMe ? 'bg-orange-500/20 text-orange-500' : 'bg-secondary text-secondary-foreground'
+            isMe ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'
           }`}>
             {entry.nickname.charAt(0).toUpperCase()}
           </div>
           <div>
             <p className="font-semibold text-sm leading-none">
               {entry.nickname}
-              {isMe && <span className="ml-1.5 text-[10px] text-orange-500 font-normal">나</span>}
+              {isMe && <span className="ml-1.5 text-[10px] text-primary font-normal">나</span>}
             </p>
             {hasGoal && (
               <p className="text-xs text-muted-foreground mt-0.5">목표 {entry.goal_distance_km}km</p>
@@ -91,7 +91,7 @@ function MemberCard({
         <div className="flex items-center gap-2">
           {achieved && <CheckCircle2 className="h-4 w-4 text-green-500" />}
           {hasGoal && !achieved && entry.total_km > 0 && (
-            <Flame className="h-4 w-4 text-orange-400" />
+            <Flame className="h-4 w-4 text-primary/80" />
           )}
           {isMe && (
             <button
@@ -113,7 +113,7 @@ function MemberCard({
             onKeyDown={(e) => e.key === 'Enter' && saveGoal()}
             className="h-8 text-sm" autoFocus
           />
-          <Button size="sm" className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white shrink-0" onClick={saveGoal} disabled={saving}>
+          <Button size="sm" className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0" onClick={saveGoal} disabled={saving}>
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : '저장'}
           </Button>
         </div>
@@ -122,7 +122,7 @@ function MemberCard({
       {!hasGoal && isMe && !editingGoal && (
         <button
           onClick={() => setEditingGoal(true)}
-          className="w-full rounded-xl border border-dashed border-orange-500/40 py-2.5 text-xs text-orange-500 hover:bg-orange-500/5 transition-colors flex items-center justify-center gap-1.5"
+          className="w-full rounded-xl border border-dashed border-primary/40 py-2.5 text-xs text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
         >
           <Target className="h-3.5 w-3.5" />내 목표 거리를 설정해주세요
         </button>
@@ -145,7 +145,7 @@ function MemberCard({
           {/* 커스텀 진행 바 — 어두운 트랙 + 은은한 오렌지 */}
           <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-orange-500/70'}`}
+              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-primary/70'}`}
               style={{ width: `${pct}%` }}
             />
           </div>

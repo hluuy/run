@@ -85,7 +85,7 @@ export default function InvitePage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/10 text-2xl">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
             🎯
           </div>
           <h1 className="text-xl font-bold">{group.name}</h1>
@@ -117,7 +117,7 @@ export default function InvitePage() {
           </div>
 
           <Button
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             onClick={saveGoalAndFinish}
             disabled={savingGoal}
           >
@@ -139,7 +139,7 @@ export default function InvitePage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/10 text-2xl">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
             🏃
           </div>
           <p className="text-sm text-muted-foreground">그룹 초대</p>
@@ -159,7 +159,7 @@ export default function InvitePage() {
         </div>
 
         <Button
-          className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           onClick={join}
           disabled={joining}
         >

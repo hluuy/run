@@ -73,14 +73,14 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-6">
       {/* 배경 장식 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-orange-500/5 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-orange-500/3 blur-3xl" />
+        <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-primary/[0.03] blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-sm">
         {/* 로고 영역 */}
         <div className="mb-10 text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10 text-3xl ring-1 ring-orange-500/20">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl ring-1 ring-primary/20">
             🏃
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">런 트래커</h1>
@@ -121,10 +121,10 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleEmailLogin()}
-              className="h-12 border-border bg-card focus-visible:ring-orange-500/30 focus-visible:border-orange-500/50"
+              className="h-12 border-border bg-card focus-visible:ring-primary/30 focus-visible:border-primary/50"
             />
             <Button
-              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
               onClick={handleEmailLogin}
               disabled={loading !== null || !email}
             >

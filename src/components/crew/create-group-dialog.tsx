@@ -49,7 +49,7 @@ export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" className="gap-1.5 bg-orange-500 hover:bg-orange-600 text-white" />}>
+      <DialogTrigger render={<Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground" />}>
         <Plus className="h-4 w-4" /> 그룹 만들기
       </DialogTrigger>
       <DialogContent>
@@ -72,7 +72,7 @@ export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
                   onClick={() => setValue('goal_type', opt.value)}
                   className={`rounded-xl border p-3 text-left transition-colors ${
                     selectedType === opt.value
-                      ? 'border-orange-500 bg-orange-500/10 text-orange-500'
+                      ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-card hover:bg-muted'
                   }`}
                 >
@@ -83,7 +83,7 @@ export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={loading}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}만들기
           </Button>
         </form>

@@ -165,7 +165,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
               <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-sm flex-1 truncate">{gpxFile.name}</span>
-              {gpxAutoFilled && <span className="text-xs text-orange-500 shrink-0">자동 입력됨</span>}
+              {gpxAutoFilled && <span className="text-xs text-primary shrink-0">자동 입력됨</span>}
               <button type="button" onClick={removeGpx}>
                 <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
               </button>
@@ -174,7 +174,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex w-full items-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm text-muted-foreground hover:border-orange-400 hover:text-foreground transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
             >
               <Paperclip className="h-4 w-4" />GPX 파일 첨부
             </button>
@@ -215,7 +215,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={loading}>
+      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isEdit ? '수정 저장' : '기록 저장'}
       </Button>

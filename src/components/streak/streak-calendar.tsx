@@ -88,7 +88,7 @@ export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRu
                   className={cn(
                     'relative flex aspect-square flex-col items-center justify-center rounded-xl text-xs font-medium transition-transform active:scale-95',
                     hasRun ? 'cursor-pointer' : 'cursor-default',
-                    isToday && !hasRun && 'ring-1 ring-orange-400'
+                    isToday && !hasRun && 'ring-1 ring-primary/60'
                   )}
                   style={hasRun ? { backgroundColor: intensityToColor(dayData.intensityScore), color: 'white' } : undefined}
                 >
