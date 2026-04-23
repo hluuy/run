@@ -32,11 +32,11 @@ export function calcIntensityScore(
   return 0.3
 }
 
-// 강도 점수 → 오렌지 색상 (Tailwind 인라인 스타일)
+// 강도 점수 → 디자인 시스템 색상
 export function intensityToColor(score: number): string {
-  if (score >= 1.0) return 'hsl(20 90% 42%)'   // 진한 오렌지
-  if (score >= 0.65) return 'hsl(28 90% 55%)'  // 중간 오렌지
-  return 'hsl(36 90% 68%)'                      // 연한 오렌지
+  if (score >= 1.0) return 'oklch(0.62 0.21 25)'   // coral (accent) — 최고
+  if (score >= 0.65) return 'oklch(0.72 0.18 45)'  // primary orange — 평균 이상
+  return 'oklch(0.72 0.10 45)'                      // 연한 오렌지 — 평균 미만
 }
 
 // runs 배열 → local_date_key 기준 DayData 맵

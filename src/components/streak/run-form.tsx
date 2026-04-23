@@ -192,16 +192,22 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
 
       <div className="space-y-1.5">
         <Label>소요시간</Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {[
             { field: 'hours' as const, max: 23, placeholder: '0', label: '시' },
             { field: 'minutes' as const, max: 59, placeholder: '30', label: '분' },
             { field: 'seconds' as const, max: 59, placeholder: '00', label: '초' },
-          ].map(({ field, max, placeholder, label }) => (
-            <div key={field} className="flex-1">
-              <Input type="number" min={0} max={max} placeholder={placeholder}
-                {...register(field, { valueAsNumber: true })} />
-              <p className="mt-1 text-center text-xs text-muted-foreground">{label}</p>
+          ].map(({ field, max, placeholder, label }, idx) => (
+            <div key={field} className="flex items-center gap-1.5 flex-1">
+              {idx > 0 && <span className="text-muted-foreground font-bold shrink-0">:</span>}
+              <div className="flex-1">
+                <div className="relative">
+                  <Input type="number" min={0} max={max} placeholder={placeholder}
+                    className="pr-5 text-center"
+                    {...register(field, { valueAsNumber: true })} />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">{label}</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>

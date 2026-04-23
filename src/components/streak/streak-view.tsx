@@ -44,9 +44,9 @@ export function StreakView() {
       <div className="flex items-center gap-3 px-4 mt-3 mb-2">
         <p className="text-xs text-muted-foreground">강도:</p>
         {[
-          { color: 'hsl(36 90% 68%)', label: '평균 미만' },
-          { color: 'hsl(28 90% 55%)', label: '평균 이상' },
-          { color: 'hsl(20 90% 42%)', label: '최고' },
+          { color: 'oklch(0.72 0.10 45)', label: '평균 미만' },
+          { color: 'oklch(0.72 0.18 45)', label: '평균 이상' },
+          { color: 'oklch(0.62 0.21 25)', label: '최고' },
         ].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-1">
             <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: color }} />
