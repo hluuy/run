@@ -127,4 +127,8 @@
   html {
     @apply font-sans;
   }
+  /* iOS Safari 자동 화면 확대 방지 — font-size 16px 미만 시 zoom 발생 */
+  input, select, textarea {
+    font-size: 16px;
+  }
 }
