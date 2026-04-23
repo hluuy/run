@@ -1,4 +1,4 @@
-# 작업 현황 (2026-04-23)
+# 작업 현황 (2026-04-23 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
@@ -72,6 +72,20 @@ SUPABASE_SERVICE_ROLE_KEY=
 - [x] PWA 오프라인 설정 — next-pwa 이미 정상 설정 확인 (sw.js 생성됨)
 - [x] Rate limiting — Upstash Redis 교체 완료, 남은 시간 메시지 반환
 
+### 2026-04-23 작업 완료
+- [x] **하단 네비바 대칭** — `justify-around` → `flex-1` 균등 폭 배분
+- [x] **기록 창 좌우 흔들림 제거** — 두 가지 원인 동시 수정
+  - Dialog 애니메이션: `zoom-in-95` → `slide-in-from-bottom-4` (수직 이동만)
+  - `html/body`에 `overflow-x: hidden` 추가 (뷰포트 가로 밀림 원천 차단)
+  - WheelPicker 스크롤 div에 `touch-action: pan-y` 추가 (대각선 터치 수직 처리)
+- [x] **휠 피커 크기 축소** — `ITEM_H 40→32` (200px → 160px), 텍스트 한 단계 축소
+- [x] **그룹 생성 목표 주기 UI** — 설명 텍스트 제거, 일간/주간/월간 레이블만 중앙 정렬로 표시
+- [x] **탭 전환 속도 개선 (SWR)** — `swr@2.4.1` 도입
+  - `use-user`, `use-month-runs`, `crew/page`: `useEffect` → `useSWR` 교체
+  - `'auth-user'` 키 공유로 `getUser()` 중복 호출 제거
+  - 탭 재방문 시 캐시 즉시 표시 → 백그라운드에서 최신 데이터 갱신
+- [x] **frontend-design 플러그인 설치** — Claude Code 공식 플러그인 (user scope)
+
 ### 미결 이슈
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
@@ -98,6 +112,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 | 그룹 리더보드 | `get_group_leaderboard` SECURITY DEFINER RPC |
 | 심박수 필드 | `setValueAs` 사용 (`valueAsNumber` 충돌) |
 | 로그인 | 이메일 → 즉시 로그인 (OTP 비활성화 상태) |
+| 데이터 캐싱 | SWR `'auth-user'` 키 공유 — getUser() 중복 호출 금지, useSWR로 통일 |
 
 ---
 
