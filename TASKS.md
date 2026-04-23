@@ -86,6 +86,24 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 탭 재방문 시 캐시 즉시 표시 → 백그라운드에서 최신 데이터 갱신
 - [x] **frontend-design 플러그인 설치** — Claude Code 공식 플러그인 (user scope)
 
+### 2026-04-23 추가 작업 완료
+- [x] **스트릭 캘린더 셀 색상 개선** — 완전 불투명 → 반투명 틴트 + 테두리 방식
+  - `intensityToColor()` → `intensityToStyle()` 교체 (`src/lib/streak.ts`)
+  - 저강도: 12% 불투명도 오렌지 / 중강도: 18% + 50% 테두리 / 최고강도: 25% 코랄 + 80% 테두리
+  - 텍스트 `text-white` → `text-foreground` (네이비 배경 위 가독성)
+- [x] **소요시간 휠 피커 개선**
+  - h/m/s 단위를 아이템 내부에서 제거 → 피커 사이 고정 라벨로 분리
+  - 분/초: 한 자리 → 두 자리 패딩 (`00`, `01`…)
+  - `VISIBLE 5→3`: 휠 높이 160px → 96px (거리 피커도 동일 적용)
+- [x] **커스텀 날짜 피커** (`src/components/ui/date-picker-sheet.tsx` 신규)
+  - native `<input type="date">` 대체 — 앱 디자인 통일
+  - 선택 날짜: 오렌지 primary 배경 / 오늘: primary 링 / 미래: 비활성
+  - 날짜 선택 즉시 닫힘, 배경 탭으로도 닫힘
+- [x] **크루 — 저번 목표 달성 여부 표시** (`src/components/crew/group-detail.tsx`)
+  - `getPreviousPeriod()` 추가: 일간→어제, 주간→지난주, 월간→지난달
+  - 현재·이전 주기 리더보드 병렬 fetch (`Promise.all`)
+  - 목표 설정 멤버에게만 "✓ 저번 목표 달성" (초록) / "✗ 저번 목표 미달성" (회색) 표시
+
 ### 미결 이슈
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
