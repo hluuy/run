@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
-import { rateLimit } from '@/lib/rate-limit'
+import { inviteRateLimit, formatRetryAfter } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -42,8 +42,8 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
-  const { allowed } = rateLimit(`invite:${ip}`, 5, 10 * 60_000)
-  if (!allowed) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  const { success, reset } = await inviteRateLimit.limit(`invite:${ip}`)
+  if (!success) return NextResponse.json({ error: 'rate_limited', message: formatRetryAfter(reset) }, { status: 429 })
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

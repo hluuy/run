@@ -1,27 +1,29 @@
-// 메모리 기반 rate limiter (단일 서버리스 인스턴스용, 소규모 앱)
-// Vercel Serverless는 인스턴스가 분리될 수 있어 완벽하지 않지만
-// 신뢰 그룹 앱에서는 충분한 수준의 방어
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
-const store = new Map<string, { count: number; resetAt: number }>()
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
 
-interface RateLimitResult {
-  allowed: boolean
-  remaining: number
-}
+// 동일 토큰 기준 1분 10회
+export const syncRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  prefix: 'rl:sync',
+})
 
-export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
-  const now = Date.now()
-  const entry = store.get(key)
+// 동일 IP 기준 10분 5회
+export const inviteRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '10 m'),
+  prefix: 'rl:invite',
+})
 
-  if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs })
-    return { allowed: true, remaining: limit - 1 }
-  }
-
-  if (entry.count >= limit) {
-    return { allowed: false, remaining: 0 }
-  }
-
-  entry.count++
-  return { allowed: true, remaining: limit - entry.count }
+export function formatRetryAfter(resetAtMs: number): string {
+  const totalSec = Math.ceil((resetAtMs - Date.now()) / 1000)
+  const min = Math.floor(totalSec / 60)
+  const sec = totalSec % 60
+  if (min > 0) return `${min}분 ${sec}초 후에 다시 시도해주세요`
+  return `${sec}초 후에 다시 시도해주세요`
 }

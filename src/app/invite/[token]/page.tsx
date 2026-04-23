@@ -41,6 +41,11 @@ export default function InvitePage() {
     })
     setJoining(false)
     if (res.status === 401) { router.push(`/auth/login?next=/invite/${token}`); return }
+    if (res.status === 429) {
+      const data = await res.json()
+      toast.error(data.message ?? '잠시 후 다시 시도해주세요.')
+      return
+    }
     if (!res.ok) { toast.error('참여 실패. 링크가 만료됐을 수 있습니다.'); return }
     setStep('goal')
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { verifyApiToken } from '@/lib/api-token'
-import { rateLimit } from '@/lib/rate-limit'
+import { syncRateLimit, formatRetryAfter } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const syncSchema = z.object({
@@ -65,9 +65,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const { allowed } = rateLimit(`sync:${rawToken.slice(-8)}`, 10, 60_000)
-  if (!allowed) {
-    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  const { success, reset } = await syncRateLimit.limit(`sync:${rawToken.slice(-8)}`)
+  if (!success) {
+    return NextResponse.json({ error: 'rate_limited', message: formatRetryAfter(reset) }, { status: 429 })
   }
 
   const userId = await verifyApiToken(rawToken)
