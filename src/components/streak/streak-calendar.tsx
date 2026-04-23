@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getDaysInMonth, getFirstDayOfWeek, intensityToColor } from '@/lib/streak'
+import { getDaysInMonth, getFirstDayOfWeek, intensityToStyle } from '@/lib/streak'
 import { DayDetailSheet } from './day-detail-sheet'
 import type { DayData } from '@/types'
 
@@ -90,11 +90,11 @@ export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRu
                     hasRun ? 'cursor-pointer' : 'cursor-default',
                     isToday && !hasRun && 'ring-1 ring-primary/60'
                   )}
-                  style={hasRun ? { backgroundColor: intensityToColor(dayData.intensityScore), color: 'white' } : undefined}
+                  style={hasRun ? intensityToStyle(dayData.intensityScore) : undefined}
                 >
-                  <span className={cn(hasRun ? 'text-white' : 'text-foreground')}>{dayNum}</span>
+                  <span className={cn(hasRun ? 'text-foreground' : 'text-muted-foreground')}>{dayNum}</span>
                   {hasRun && (
-                    <span className="text-[9px] text-white/80 leading-none mt-0.5">
+                    <span className="text-[9px] text-primary/60 leading-none mt-0.5">
                       {dayData.totalDistanceKm.toFixed(1)}k
                     </span>
                   )}

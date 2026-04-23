@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { Run, RollingAvg, DayData } from '@/types'
 
 // 페이스 포맷: 초/km → "M'SS""
@@ -32,11 +33,21 @@ export function calcIntensityScore(
   return 0.3
 }
 
-// 강도 점수 → 디자인 시스템 색상
-export function intensityToColor(score: number): string {
-  if (score >= 1.0) return 'oklch(0.62 0.21 25)'   // coral (accent) — 최고
-  if (score >= 0.65) return 'oklch(0.72 0.18 45)'  // primary orange — 평균 이상
-  return 'oklch(0.72 0.10 45)'                      // 연한 오렌지 — 평균 미만
+// 강도 점수 → 셀 스타일 (반투명 채움 + 최고 강도 시 테두리)
+export function intensityToStyle(score: number): CSSProperties {
+  if (score >= 1.0) return {
+    backgroundColor: 'oklch(0.68 0.22 25 / 0.25)',
+    outline: '1.5px solid oklch(0.68 0.22 25 / 0.80)',
+    outlineOffset: '-1px',
+  }
+  if (score >= 0.65) return {
+    backgroundColor: 'oklch(0.72 0.18 45 / 0.18)',
+    outline: '1.5px solid oklch(0.72 0.18 45 / 0.50)',
+    outlineOffset: '-1px',
+  }
+  return {
+    backgroundColor: 'oklch(0.72 0.10 45 / 0.12)',
+  }
 }
 
 // runs 배열 → local_date_key 기준 DayData 맵
