@@ -18,9 +18,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const GOAL_OPTIONS = [
-  { value: 'daily', label: '일간', desc: '매일 목표 달성' },
-  { value: 'weekly', label: '주간', desc: '이번 주 목표 달성' },
-  { value: 'monthly', label: '월간', desc: '이번 달 목표 달성' },
+  { value: 'daily', label: '일간', desc: '매일' },
+  { value: 'weekly', label: '주간', desc: '이번 주' },
+  { value: 'monthly', label: '월간', desc: '이번 달' },
 ] as const
 
 export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
