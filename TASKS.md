@@ -59,10 +59,7 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 자동화 트리거 특정 시간(23:30 추천)으로 변경
 
 ### 이후 작업
-- [ ] **구글 OAuth 활성화** — Supabase 설정 문제 (코드 변경 없음)
-  - `Supabase Dashboard → Authentication → Providers → Google` 활성화
-  - Google Cloud Console에서 OAuth 클라이언트 ID/Secret 발급 후 입력
-  - 현재 로그인 시 `"Unsupported provider: provider is not enabled"` 에러 발생
+- [x] **구글 OAuth 활성화** — Supabase Google 프로바이더 활성화 완료
 - [ ] **CSS 현대화** — 딥 네이비 + 오렌지/코랄 액센트 디자인 시스템으로 전체 개편
   - 글래스모피즘 (backdrop-blur, 반투명 카드)
   - 그라데이션 버튼/액센트 (오렌지 → 코랄)
