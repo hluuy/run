@@ -59,6 +59,20 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 자동화 트리거 특정 시간(23:30 추천)으로 변경
 
 ### 이후 작업
+- [ ] **구글 OAuth 활성화** — Supabase 설정 문제 (코드 변경 없음)
+  - `Supabase Dashboard → Authentication → Providers → Google` 활성화
+  - Google Cloud Console에서 OAuth 클라이언트 ID/Secret 발급 후 입력
+  - 현재 로그인 시 `"Unsupported provider: provider is not enabled"` 에러 발생
+- [ ] **CSS 현대화** — 딥 네이비 + 오렌지/코랄 액센트 디자인 시스템으로 전체 개편
+  - 글래스모피즘 (backdrop-blur, 반투명 카드)
+  - 그라데이션 버튼/액센트 (오렌지 → 코랄)
+  - globals.css 색상 토큰 교체, 주요 컴포넌트 스타일 업데이트
+- [ ] **input font-size 16px 적용** — iOS Safari 자동 화면 확대 방지
+  - 목표 수정 등 input 요소에 `font-size: 16px` 이하 시 zoom 발생
+  - globals.css 또는 shadcn input 컴포넌트에 일괄 적용
+- [ ] **PWA 앱 아이콘 제작** — 홈 화면 추가 시 표시될 아이콘
+  - 필요 사이즈: 192×192, 512×512 (maskable 포함)
+  - manifest.json 아이콘 경로 연결
 - [ ] 계정 삭제 기능
 - [ ] PWA 오프라인 설정 (next-pwa 설치됨, 설정 미완)
 - [ ] Rate limiting (현재 in-memory, Upstash Redis로 교체)
