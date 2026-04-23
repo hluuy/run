@@ -104,6 +104,16 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 현재·이전 주기 리더보드 병렬 fetch (`Promise.all`)
   - 목표 설정 멤버에게만 "✓ 저번 목표 달성" (초록) / "✗ 저번 목표 미달성" (회색) 표시
 
+### 예정 작업
+
+- [ ] **PWA 푸시 알림** — 트리거/수신 대상 결정 후 구현
+  - VAPID 키 쌍 생성 → Vercel 환경변수 등록
+  - `push_subscriptions` 테이블 추가 (user_id, subscription JSON)
+  - `/api/push/subscribe` 라우트 — 구독 정보 저장
+  - Service Worker `push` 이벤트 핸들러 추가
+  - Supabase Edge Function or Database Webhook — 트리거 발생 시 Web Push 발송
+  - **결정 필요:** ① 어떤 상황에서 알림? (러닝 기록 / 목표 달성 / 리마인더 등) ② 알림 수신 대상? (그룹 전체 / 본인만)
+
 ### 미결 이슈
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
