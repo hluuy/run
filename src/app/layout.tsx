@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
-import { ThemeProvider } from '@/components/layout/theme-provider'
+import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const geist = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
   subsets: ['latin'],
+  variable: '--font-inter',
 })
 
 export const metadata: Metadata = {
@@ -17,16 +16,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#1a1b2e',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={geist.variable}>
+    <html lang="ko" className={`dark ${inter.variable}`}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
-          <Toaster richColors />
-        </ThemeProvider>
+        {children}
+        <Toaster richColors />
       </body>
     </html>
   )

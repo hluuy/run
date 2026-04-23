@@ -60,14 +60,14 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ### 이후 작업
 - [x] **구글 OAuth 활성화** — Supabase Google 프로바이더 활성화 완료
-- [ ] **CSS 현대화** — 딥 네이비 + 오렌지/코랄 액센트 디자인 시스템으로 전체 개편
-  - 글래스모피즘 (backdrop-blur, 반투명 카드)
-  - 그라데이션 버튼/액센트 (오렌지 → 코랄)
-  - globals.css 색상 토큰 교체, 주요 컴포넌트 스타일 업데이트
+- [x] **CSS 현대화** — 딥 네이비 + 오렌지/코랄 디자인 시스템 완료
+  - globals.css: 딥 네이비 배경 + 오렌지 primary + 코랄 accent 토큰
+  - bottom-nav 글래스모피즘 (bg-background/70 backdrop-blur-xl)
+  - 전체 bg-orange-500 → bg-primary 일괄 교체 (13개 파일)
 - [x] **input font-size 16px 적용** — globals.css에 일괄 적용 완료
-- [ ] **PWA 앱 아이콘 제작** — 홈 화면 추가 시 표시될 아이콘
-  - 필요 사이즈: 192×192, 512×512 (maskable 포함)
-  - manifest.json 아이콘 경로 연결
+- [x] **PWA 앱 아이콘 제작** — 딥 네이비 + ECG 심박수 라인 디자인
+  - icon-192.png, icon-512.png 생성 완료
+  - manifest.json 아이콘 경로 및 theme_color 연결 완료
 - [x] 계정 삭제 기능 — Dialog 확인, localStorage 토큰 정리, 영구 삭제 완료
 - [ ] PWA 오프라인 설정 (next-pwa 설치됨, 설정 미완)
 - [x] Rate limiting — Upstash Redis 교체 완료, 남은 시간 메시지 반환

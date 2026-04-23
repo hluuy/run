@@ -10,10 +10,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect('/auth/login')
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col">
+    <div className="relative mx-auto flex min-h-screen max-w-md flex-col">
+      {/* Background gradient blobs */}
+      <div className="fixed inset-0 max-w-md mx-auto overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-primary/15 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-24 left-0 w-80 h-80 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl" />
+      </div>
       <AuthGuard />
       <OfflineBanner />
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="relative z-10 flex-1 pb-16">{children}</main>
       <BottomNav />
     </div>
   )

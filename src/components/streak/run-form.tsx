@@ -215,7 +215,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
+      <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" disabled={loading}>
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isEdit ? '수정 저장' : '기록 저장'}
       </Button>

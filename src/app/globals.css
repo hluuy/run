@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,72 +48,74 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* 다크 기본값 — 앱은 항상 다크 모드 */
 :root {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.13 0.01 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.01 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.01 260);
-  --primary: oklch(0.65 0.18 45);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.94 0 0);
-  --secondary-foreground: oklch(0.20 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.50 0 0);
-  --accent: oklch(0.60 0.20 25);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0 0);
-  --input: oklch(0.88 0 0);
-  --ring: oklch(0.65 0.18 45);
-  --chart-1: oklch(0.65 0.18 45);
-  --chart-2: oklch(0.60 0.20 25);
-  --chart-3: oklch(0.50 0.15 45);
-  --chart-4: oklch(0.40 0.12 45);
-  --chart-5: oklch(0.30 0.08 45);
-  --radius: 1rem;
-  --sidebar: oklch(0.96 0 0);
-  --sidebar-foreground: oklch(0.13 0.01 260);
-  --sidebar-primary: oklch(0.65 0.18 45);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.94 0 0);
-  --sidebar-accent-foreground: oklch(0.20 0 0);
-  --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.65 0.18 45);
-}
-
-.dark {
-  --background: oklch(0.14 0.05 265);
+  --background: oklch(0.13 0.03 265);
   --foreground: oklch(0.97 0 0);
-  --card: oklch(0.19 0.05 265);
+  --card: oklch(0.18 0.03 265);
   --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.19 0.05 265);
+  --popover: oklch(0.18 0.03 265);
   --popover-foreground: oklch(0.97 0 0);
   --primary: oklch(0.72 0.18 45);
-  --primary-foreground: oklch(0.10 0.03 265);
-  --secondary: oklch(0.25 0.05 265);
-  --secondary-foreground: oklch(0.88 0 0);
-  --muted: oklch(0.25 0.05 265);
-  --muted-foreground: oklch(0.62 0.03 265);
+  --primary-foreground: oklch(0.10 0.02 265);
+  --secondary: oklch(0.24 0.03 265);
+  --secondary-foreground: oklch(0.90 0 0);
+  --muted: oklch(0.24 0.03 265);
+  --muted-foreground: oklch(0.62 0.02 265);
   --accent: oklch(0.68 0.20 25);
-  --accent-foreground: oklch(0.10 0.03 265);
+  --accent-foreground: oklch(0.10 0.02 265);
   --destructive: oklch(0.65 0.22 27);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 14%);
+  --border: oklch(0.28 0.03 265);
+  --input: oklch(0.22 0.03 265);
   --ring: oklch(0.72 0.18 45);
   --chart-1: oklch(0.72 0.18 45);
   --chart-2: oklch(0.68 0.20 25);
   --chart-3: oklch(0.58 0.15 45);
   --chart-4: oklch(0.48 0.12 45);
   --chart-5: oklch(0.38 0.08 45);
-  --sidebar: oklch(0.19 0.05 265);
+  --radius: 1rem;
+  --sidebar: oklch(0.18 0.03 265);
   --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.72 0.18 45);
-  --sidebar-primary-foreground: oklch(0.10 0.03 265);
-  --sidebar-accent: oklch(0.25 0.05 265);
-  --sidebar-accent-foreground: oklch(0.88 0 0);
-  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-primary-foreground: oklch(0.10 0.02 265);
+  --sidebar-accent: oklch(0.24 0.03 265);
+  --sidebar-accent-foreground: oklch(0.90 0 0);
+  --sidebar-border: oklch(0.28 0.03 265);
+  --sidebar-ring: oklch(0.72 0.18 45);
+}
+
+/* .dark는 :root와 동일 (ThemeProvider 호환 유지) */
+.dark {
+  --background: oklch(0.13 0.03 265);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.18 0.03 265);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.18 0.03 265);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.72 0.18 45);
+  --primary-foreground: oklch(0.10 0.02 265);
+  --secondary: oklch(0.24 0.03 265);
+  --secondary-foreground: oklch(0.90 0 0);
+  --muted: oklch(0.24 0.03 265);
+  --muted-foreground: oklch(0.62 0.02 265);
+  --accent: oklch(0.68 0.20 25);
+  --accent-foreground: oklch(0.10 0.02 265);
+  --destructive: oklch(0.65 0.22 27);
+  --border: oklch(0.28 0.03 265);
+  --input: oklch(0.22 0.03 265);
+  --ring: oklch(0.72 0.18 45);
+  --chart-1: oklch(0.72 0.18 45);
+  --chart-2: oklch(0.68 0.20 25);
+  --chart-3: oklch(0.58 0.15 45);
+  --chart-4: oklch(0.48 0.12 45);
+  --chart-5: oklch(0.38 0.08 45);
+  --sidebar: oklch(0.18 0.03 265);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.72 0.18 45);
+  --sidebar-primary-foreground: oklch(0.10 0.02 265);
+  --sidebar-accent: oklch(0.24 0.03 265);
+  --sidebar-accent-foreground: oklch(0.90 0 0);
+  --sidebar-border: oklch(0.28 0.03 265);
   --sidebar-ring: oklch(0.72 0.18 45);
 }
 
@@ -127,7 +129,7 @@
   html {
     @apply font-sans;
   }
-  /* iOS Safari 자동 화면 확대 방지 — font-size 16px 미만 시 zoom 발생 */
+  /* iOS Safari 자동 화면 확대 방지 */
   input, select, textarea {
     font-size: 16px;
   }

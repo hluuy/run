@@ -20,7 +20,7 @@ export function AddRunSheet({ onSuccess }: AddRunSheetProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground" />}>
+      <DialogTrigger render={<Button size="sm" className="gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300" />}>
         <Plus className="h-4 w-4" />
         러닝 기록
       </DialogTrigger>
