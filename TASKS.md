@@ -1,4 +1,4 @@
-# 작업 현황 (2026-04-23 업데이트)
+# 작업 현황 (2026-04-23 업데이트 2)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
@@ -104,6 +104,13 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 현재·이전 주기 리더보드 병렬 fetch (`Promise.all`)
   - 목표 설정 멤버에게만 "✓ 저번 목표 달성" (초록) / "✗ 저번 목표 미달성" (회색) 표시
 
+### 2026-04-23 보안/버그 패치
+- [x] **초대 링크 멤버십 검증** — `POST /api/invites` 에서 그룹 멤버가 아닌 사용자의 초대 링크 생성 차단 (403)
+- [x] **저번 목표 배지 오탐 수정** — `joined_at ≤ prevStart` 조건 추가, 이전 주기 이후 가입 멤버에겐 배지 미표시
+- [x] **DatePickerSheet 빈 값 가드** — `value` 빈 문자열일 때 오늘 날짜로 폴백
+- [x] **KST 유틸 추출** — `src/lib/kst.ts` (`nowKST()`, `todayKST()`) 중앙화
+- [x] **sw.js gitignore** — next-pwa 빌드 산출물(`public/sw.js`, `public/workbox-*.js`) 제외
+
 ### 예정 작업
 
 - [ ] **앱 정보 & 버전 관리** — 설정 화면에 앱 버전 + 변경 이력 섹션 추가
@@ -121,6 +128,11 @@ SUPABASE_SERVICE_ROLE_KEY=
   - **결정 필요:** ① 어떤 상황에서 알림? (러닝 기록 / 목표 달성 / 리마인더 등) ② 알림 수신 대상? (그룹 전체 / 본인만)
 
 ### 미결 이슈
+- [ ] **directlogin 보안 강화** — 현재 이메일만 알면 `token_hash`를 받아 즉시 로그인 가능한 구조 (이메일 발송 없음)
+  - 옵션 A: 허용 이메일 목록(`ALLOWED_EMAILS` 환경변수)으로 접근 제한
+  - 옵션 B: 실제 매직 링크 이메일 발송 방식으로 복원 (`src/app/auth/login/page.tsx` 주석 참고)
+  - 현재는 신뢰 그룹 전용이므로 위험 감수 상태 — 추후 재검토 예정
+
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
   - 확인 필요: Supabase Dashboard → Authentication → Users에서 계정 상태 확인
