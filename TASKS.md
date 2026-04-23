@@ -106,6 +106,12 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ### 예정 작업
 
+- [ ] **앱 정보 & 버전 관리** — 설정 화면에 앱 버전 + 변경 이력 섹션 추가
+  - `package.json` version 필드를 버전 소스로 사용 (예: `1.0.0`, `1.1.0`…)
+  - 주요 기능 변경/추가 시에만 버전 올리고 변경 내용 노출 (버그픽스·디자인 조정은 생략)
+  - 설정 화면 하단 "앱 정보" 섹션: 현재 버전 + 최근 업데이트 내용 (2~3줄 요약)
+  - 변경 이력은 코드 내 상수로 관리 (`src/lib/changelog.ts`)
+
 - [ ] **PWA 푸시 알림** — 트리거/수신 대상 결정 후 구현
   - VAPID 키 쌍 생성 → Vercel 환경변수 등록
   - `push_subscriptions` 테이블 추가 (user_id, subscription JSON)
