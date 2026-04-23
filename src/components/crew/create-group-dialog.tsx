@@ -18,9 +18,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const GOAL_OPTIONS = [
-  { value: 'daily', label: '일간', desc: '매일' },
-  { value: 'weekly', label: '주간', desc: '이번 주' },
-  { value: 'monthly', label: '월간', desc: '이번 달' },
+  { value: 'daily', label: '일간' },
+  { value: 'weekly', label: '주간' },
+  { value: 'monthly', label: '월간' },
 ] as const
 
 export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
@@ -70,14 +70,13 @@ export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
                   key={opt.value}
                   type="button"
                   onClick={() => setValue('goal_type', opt.value)}
-                  className={`rounded-xl border p-3 text-left transition-colors ${
+                  className={`rounded-xl border p-3 text-center transition-colors ${
                     selectedType === opt.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-card hover:bg-muted'
                   }`}
                 >
-                  <p className="font-semibold text-sm">{opt.label}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{opt.desc}</p>
+                  <p className="font-semibold text-sm text-center">{opt.label}</p>
                 </button>
               ))}
             </div>
