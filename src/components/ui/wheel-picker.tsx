@@ -4,8 +4,8 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
 export const ITEM_H = 32
-export const VISIBLE = 5
-export const WHEEL_PAD = ((VISIBLE - 1) / 2) * ITEM_H  // 64px
+export const VISIBLE = 3
+export const WHEEL_PAD = ((VISIBLE - 1) / 2) * ITEM_H  // 32px
 
 interface WheelPickerProps {
   items: string[]

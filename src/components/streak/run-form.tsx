@@ -27,10 +27,10 @@ function todayKST() {
 const INT_ITEMS  = Array.from({ length: 100 }, (_, i) => String(i))
 const DEC_ITEMS  = Array.from({ length: 100 }, (_, i) => `.${String(i).padStart(2, '0')}`)
 
-// 시간: 시/분/초
-const HOUR_ITEMS = Array.from({ length: 24 }, (_, i) => `${i}h`)
-const MIN_ITEMS  = Array.from({ length: 60 }, (_, i) => `${i}m`)
-const SEC_ITEMS  = Array.from({ length: 60 }, (_, i) => `${i}s`)
+// 시간: 시/분/초 (단위는 피커 밖에 표시)
+const HOUR_ITEMS = Array.from({ length: 24 }, (_, i) => String(i))
+const MIN_ITEMS  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+const SEC_ITEMS  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
 export function RunForm({ onSuccess, editRun }: RunFormProps) {
   const [loading, setLoading] = useState(false)
@@ -238,10 +238,13 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
       {/* 소요시간 피커 */}
       <div className="space-y-2">
         <Label>소요시간</Label>
-        <div className="flex items-center gap-1 rounded-2xl border border-border overflow-hidden bg-secondary/30">
+        <div className="flex items-center rounded-2xl border border-border overflow-hidden bg-secondary/30">
           <WheelPicker items={HOUR_ITEMS} selectedIndex={pickHours}   onChange={setPickHours} />
+          <span className="flex-none text-xs font-medium text-muted-foreground">h</span>
           <WheelPicker items={MIN_ITEMS}  selectedIndex={pickMinutes} onChange={setPickMinutes} />
+          <span className="flex-none text-xs font-medium text-muted-foreground">m</span>
           <WheelPicker items={SEC_ITEMS}  selectedIndex={pickSeconds} onChange={setPickSeconds} />
+          <span className="flex-none text-xs font-medium text-muted-foreground pr-3">s</span>
         </div>
         {errors.minutes && <p className="text-xs text-destructive">{errors.minutes.message}</p>}
       </div>
