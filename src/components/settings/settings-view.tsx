@@ -8,20 +8,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { ApiTokenSection } from './api-token-section'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, TriangleAlert } from 'lucide-react'
+
+const STORAGE_KEY = 'rnt_saved_token'
 
 export function SettingsView() {
   const { user, profile } = useUser()
   const [nickname, setNickname] = useState(profile?.nickname ?? '')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
-  // profile이 로드되면 닉네임 초기화
   if (profile && !nickname) setNickname(profile.nickname)
 
   async function saveNickname() {
@@ -38,10 +46,14 @@ export function SettingsView() {
   }
 
   async function deleteAccount() {
-    if (!confirmDelete) { setConfirmDelete(true); return }
     setDeleting(true)
     const res = await fetch('/api/account', { method: 'DELETE' })
-    if (!res.ok) { toast.error('계정 삭제 실패'); setDeleting(false); return }
+    if (!res.ok) {
+      toast.error('계정 삭제 실패. 잠시 후 다시 시도해주세요.')
+      setDeleting(false)
+      return
+    }
+    localStorage.removeItem(STORAGE_KEY)
     await supabase.auth.signOut()
     router.push('/auth/login')
   }
@@ -82,23 +94,45 @@ export function SettingsView() {
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <Button variant="outline" className="w-full" onClick={signOut}>로그아웃</Button>
           <Separator />
-          {confirmDelete ? (
-            <div className="space-y-2">
-              <p className="text-xs text-destructive text-center">정말 삭제하시겠습니까? 복구 불가합니다.</p>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>취소</Button>
-                <Button variant="destructive" className="flex-1" onClick={deleteAccount} disabled={deleting}>
-                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : '삭제 확인'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button variant="ghost" className="w-full text-destructive hover:text-destructive" onClick={deleteAccount}>
-              계정 삭제
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:text-destructive"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            계정 삭제
+          </Button>
         </div>
       </div>
+
+      {/* 계정 삭제 확인 다이얼로그 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <TriangleAlert className="h-5 w-5" />
+              계정 삭제
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>계정을 삭제하면 다음 데이터가 <strong className="text-foreground">즉시 영구 삭제</strong>됩니다.</p>
+            <ul className="space-y-1 text-xs list-disc list-inside">
+              <li>모든 러닝 기록 및 GPX 파일</li>
+              <li>참여 중인 크루 멤버십</li>
+              <li>API 토큰</li>
+              <li>계정 정보</li>
+            </ul>
+            <p className="text-destructive text-xs font-medium">이 작업은 취소하거나 복구할 수 없습니다.</p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+              취소
+            </Button>
+            <Button variant="destructive" onClick={deleteAccount} disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : '영구 삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -68,7 +68,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 - [ ] **PWA 앱 아이콘 제작** — 홈 화면 추가 시 표시될 아이콘
   - 필요 사이즈: 192×192, 512×512 (maskable 포함)
   - manifest.json 아이콘 경로 연결
-- [ ] 계정 삭제 기능
+- [x] 계정 삭제 기능 — Dialog 확인, localStorage 토큰 정리, 영구 삭제 완료
 - [ ] PWA 오프라인 설정 (next-pwa 설치됨, 설정 미완)
 - [x] Rate limiting — Upstash Redis 교체 완료, 남은 시간 메시지 반환
 
