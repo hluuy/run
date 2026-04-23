@@ -3,9 +3,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
-export const ITEM_H = 40
+export const ITEM_H = 32
 export const VISIBLE = 5
-export const WHEEL_PAD = ((VISIBLE - 1) / 2) * ITEM_H  // 80px
+export const WHEEL_PAD = ((VISIBLE - 1) / 2) * ITEM_H  // 64px
 
 interface WheelPickerProps {
   items: string[]
@@ -78,9 +78,9 @@ export function WheelPicker({ items, selectedIndex, onChange, className }: Wheel
                 key={i}
                 className={cn(
                   'flex items-center justify-center select-none transition-all duration-100',
-                  d === 0 && 'text-foreground text-xl font-bold',
-                  d === 1 && 'text-muted-foreground/70 text-base font-normal',
-                  d === 2 && 'text-muted-foreground/35 text-sm',
+                  d === 0 && 'text-foreground text-base font-bold',
+                  d === 1 && 'text-muted-foreground/70 text-sm font-normal',
+                  d === 2 && 'text-muted-foreground/35 text-xs',
                   d >= 3  && 'text-muted-foreground/15 text-xs',
                 )}
                 style={{ height: ITEM_H, scrollSnapAlign: 'center' }}
