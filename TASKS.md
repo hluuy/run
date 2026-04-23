@@ -69,8 +69,23 @@ SUPABASE_SERVICE_ROLE_KEY=
   - icon-192.png, icon-512.png 생성 완료
   - manifest.json 아이콘 경로 및 theme_color 연결 완료
 - [x] 계정 삭제 기능 — Dialog 확인, localStorage 토큰 정리, 영구 삭제 완료
-- [ ] PWA 오프라인 설정 (next-pwa 설치됨, 설정 미완)
+- [x] PWA 오프라인 설정 — next-pwa 이미 정상 설정 확인 (sw.js 생성됨)
 - [x] Rate limiting — Upstash Redis 교체 완료, 남은 시간 메시지 반환
+
+### 미결 이슈
+- [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
+  - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
+  - 확인 필요: Supabase Dashboard → Authentication → Users에서 계정 상태 확인
+  - 원하는 동작이 무엇인지 결정 후 처리 (분리 vs 통합 유지)
+
+- [ ] **Google OAuth 동의 화면 서비스명 변경** — 현재 `supabase.co` 도메인 이름으로 표시됨
+  - Google Cloud Console → OAuth 동의 화면 → 앱 이름/도메인 수정
+  - Supabase 프로젝트 설정에서 Site URL도 실제 서비스 URL로 변경 필요
+
+- [ ] **도메인 변경** — 현재 `runstreak-nine.vercel.app`
+  - Vercel에서 커스텀 도메인 연결 가능 (유료 도메인 구매 필요, 약 $10~15/년)
+  - 추천 도메인 예시: `runstreak.kr`, `runwith.me` 등
+  - 변경 시 Supabase → Authentication → URL Configuration의 Site URL / Redirect URLs도 함께 수정 필요
 
 ---
 
