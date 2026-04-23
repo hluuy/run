@@ -11,8 +11,18 @@ export async function POST(request: Request) {
 
   const { group_id } = z.object({ group_id: z.string().uuid() }).parse(await request.json())
 
-  const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const admin = createAdminClient()
+
+  // 초대 생성자가 해당 그룹 멤버인지 검증
+  const { data: membership } = await admin
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', group_id)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (!membership) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+
+  const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const { data, error } = await admin
     .from('invites')
     .insert({ group_id, created_by: user.id, expires_at })

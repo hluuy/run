@@ -63,13 +63,15 @@ function getGoalPeriod(goalType: string): { start: string; end: string; label: s
 const PERIOD_LABEL: Record<string, string> = { daily: '일간', weekly: '주간', monthly: '월간' }
 
 function MemberCard({
-  entry, isMe, groupId, onGoalSaved, prevKm,
+  entry, isMe, groupId, onGoalSaved, prevKm, joinedAt, prevStart,
 }: {
   entry: LeaderboardEntry
   isMe: boolean
   groupId: string
   onGoalSaved: () => void
   prevKm: number
+  joinedAt: string
+  prevStart: string
 }) {
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState(String(entry.goal_distance_km ?? ''))
@@ -78,6 +80,8 @@ function MemberCard({
   const hasGoal = entry.goal_distance_km !== null
   const pct = hasGoal ? Math.min((entry.total_km / entry.goal_distance_km!) * 100, 100) : 0
   const achieved = hasGoal && entry.total_km >= entry.goal_distance_km!
+  // 이전 주기 시작일 이전에 가입한 멤버에게만 배지 표시
+  const wasInGroupDuringPrev = !!joinedAt && joinedAt.slice(0, 10) <= prevStart
 
   async function saveGoal() {
     const km = parseFloat(goalInput)
@@ -114,7 +118,7 @@ function MemberCard({
             {hasGoal && (
               <p className="text-xs text-muted-foreground mt-0.5">목표 {entry.goal_distance_km}km</p>
             )}
-            {hasGoal && (
+            {hasGoal && wasInGroupDuringPrev && (
               <p className={`text-[10px] mt-0.5 font-medium ${prevKm >= entry.goal_distance_km! ? 'text-green-500' : 'text-muted-foreground/50'}`}>
                 {prevKm >= entry.goal_distance_km! ? '✓ 저번 목표 달성' : '✗ 저번 목표 미달성'}
               </p>
@@ -192,6 +196,8 @@ function MemberCard({
 export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () => void }) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [prevKmMap, setPrevKmMap] = useState<Map<string, number>>(new Map())
+  const [joinedAtMap, setJoinedAtMap] = useState<Map<string, string>>(new Map())
+  const [prevStart, setPrevStart] = useState('')
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
   const [myId, setMyId] = useState<string | null>(null)
@@ -203,11 +209,12 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   async function load() {
     if (!group.goal_type) { setLoading(false); return }
     const { start, end } = getGoalPeriod(group.goal_type)
-    const { start: prevStart, end: prevEnd } = getPreviousPeriod(group.goal_type)
+    const { start: ps, end: pe } = getPreviousPeriod(group.goal_type)
 
-    const [{ data: currData }, { data: prevData }] = await Promise.all([
+    const [{ data: currData }, { data: prevData }, { data: memberData }] = await Promise.all([
       supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: start, p_end: end }),
-      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: prevStart, p_end: prevEnd }),
+      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: ps, p_end: pe }),
+      supabase.from('group_members').select('user_id, joined_at').eq('group_id', group.id),
     ])
 
     setLeaderboard((currData as LeaderboardEntry[]) ?? [])
@@ -217,6 +224,13 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
       pm.set(e.user_id, e.total_km)
     }
     setPrevKmMap(pm)
+
+    const jm = new Map<string, string>()
+    for (const m of (memberData ?? [])) {
+      jm.set(m.user_id, m.joined_at)
+    }
+    setJoinedAtMap(jm)
+    setPrevStart(ps)
     setLoading(false)
   }
 
@@ -320,6 +334,8 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
               groupId={group.id}
               onGoalSaved={() => { setLoading(true); load() }}
               prevKm={prevKmMap.get(entry.user_id) ?? 0}
+              joinedAt={joinedAtMap.get(entry.user_id) ?? ''}
+              prevStart={prevStart}
             />
           ))}
         </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getDaysInMonth, getFirstDayOfWeek } from '@/lib/streak'
+import { todayKST } from '@/lib/kst'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -17,9 +18,10 @@ interface DatePickerSheetProps {
 
 export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) {
   const [open, setOpen] = useState(false)
-  const [yearMonth, setYearMonth] = useState(value.slice(0, 7))
+  const todayKey = todayKST()
+  const safeValue = value || todayKey
+  const [yearMonth, setYearMonth] = useState(safeValue.slice(0, 7))
 
-  const todayKey = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const maxKey = max ?? todayKey
   const currentYM = todayKey.slice(0, 7)
 
@@ -41,7 +43,7 @@ export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) 
   }
 
   function handleOpen() {
-    setYearMonth(value.slice(0, 7))
+    setYearMonth(safeValue.slice(0, 7))
     setOpen(true)
   }
 
@@ -50,7 +52,7 @@ export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) 
     setOpen(false)
   }
 
-  const [vy, vm, vd] = value.split('-')
+  const [vy, vm, vd] = safeValue.split('-')
   const displayValue = `${vy}년 ${parseInt(vm)}월 ${parseInt(vd)}일`
 
   return (
@@ -95,7 +97,7 @@ export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) 
             ))}
             {days.map((dateKey) => {
               const dayNum = parseInt(dateKey.split('-')[2])
-              const isSelected = dateKey === value
+              const isSelected = dateKey === safeValue
               const isToday = dateKey === todayKey
               const isFuture = dateKey > maxKey
 
