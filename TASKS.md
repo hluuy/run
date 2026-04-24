@@ -115,9 +115,10 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ### 2026-04-24 보안 패치 (2차)
 - [x] **directlogin rate limiting** — IP+email 기준 1분 5회 제한 추가 (`loginRateLimit`)
-- [x] **listUsers 스캔 제거** — `generateLink({ shouldCreateUser: false })` 단일 호출로 사용자 존재 확인 (열거 공격 방지)
 - [x] **redirectTo 서버 검증** — 자신의 origin으로 시작하는 URL만 허용 (오픈 리다이렉트 방지)
 - [x] **Chrome intent URL search 누락 수정** — `window.location.search` 포함 (`login/page.tsx`)
+- [x] **useSearchParams Suspense 래핑** — `login`, `onboarding` 페이지 prerender 빌드 오류 수정
+- [ ] **listUsers 전체 스캔 개선** — Supabase admin JS 타입에 `generateLink.shouldCreateUser` 미지원으로 유지 중. rate limiting(1분 5회)으로 열거 공격 실용성 완화. 향후 Supabase SDK 업데이트 시 재검토
 
 ### 2026-04-24 작업 완료
 - [x] **Shortcuts 설명 수정** — NRC 안내 문구에 "당일 러닝 데이터만 등록" 명시 (`api-token-section.tsx`)
