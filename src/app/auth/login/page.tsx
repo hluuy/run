@@ -1,24 +1,40 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertTriangle } from 'lucide-react'
+
+function safeNext(next: string | null): string | null {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return null
+  return next
+}
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextUrl = safeNext(searchParams.get('next'))
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState<'google' | 'email' | null>(null)
+  const [isSamsungBrowser, setIsSamsungBrowser] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    setIsSamsungBrowser(/SamsungBrowser/i.test(navigator.userAgent))
+  }, [])
 
   async function handleGoogle() {
     setLoading('google')
+    const callbackUrl = nextUrl
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
+      : `${location.origin}/auth/callback`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl },
     })
     if (error) {
       toast.error('Google 로그인 실패: ' + error.message)
@@ -30,15 +46,26 @@ export default function LoginPage() {
     if (!email || loading) return
     setLoading('email')
 
+    const callbackUrl = nextUrl
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
+      : `${location.origin}/auth/callback`
+
     const res = await fetch('/api/auth/directlogin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, redirectTo: callbackUrl }),
     })
     const data = await res.json()
 
     if (!res.ok) {
       toast.error('로그인 실패: ' + (data.error ?? ''))
+      setLoading(null)
+      return
+    }
+
+    // 신규 사용자 — 이메일로 인증 링크 발송됨
+    if (data.email_sent) {
+      setEmailSent(true)
       setLoading(null)
       return
     }
@@ -60,7 +87,11 @@ export default function LoginPage() {
       .eq('id', (await supabase.auth.getUser()).data.user!.id)
       .maybeSingle()
 
-    router.push(profile ? '/' : '/onboarding')
+    if (!profile) {
+      router.push(nextUrl ? `/onboarding?next=${encodeURIComponent(nextUrl)}` : '/onboarding')
+    } else {
+      router.push(nextUrl ?? '/')
+    }
   }
 
   /* ── OTP 이메일 인증 흐름 (비활성화) ────────────────────────────────
@@ -68,6 +99,33 @@ export default function LoginPage() {
   async function handleVerifyOtp() { ... supabase.auth.verifyOtp({ email, token, type: 'email' }) ... }
   {sent ? <OTP입력화면 /> : <이메일입력화면 />}
   ─────────────────────────────────────────────────────────────────── */
+
+  // 신규 사용자 — 이메일 인증 대기 화면
+  if (emailSent) {
+    return (
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-6">
+        <div className="relative w-full max-w-sm text-center space-y-6">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-3xl shadow-lg shadow-primary/25 mx-auto">
+            📧
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight">이메일을 확인해주세요</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <span className="font-medium text-foreground">{email}</span>로<br />
+              로그인 링크를 보냈습니다.<br />
+              이메일의 링크를 클릭하면 바로 로그인됩니다.
+            </p>
+          </div>
+          <button
+            onClick={() => { setEmailSent(false) }}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+          >
+            다른 이메일로 시도하기
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-6">
@@ -88,12 +146,32 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4">
+          {/* 삼성 브라우저 경고 */}
+          {isSamsungBrowser && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/8 p-3">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-amber-400">삼성 인터넷 브라우저 감지됨</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Google의 보안 정책으로 인해 삼성 인터넷에서는 Google 로그인이 차단됩니다.
+                  <strong className="text-foreground"> 이메일 로그인</strong>을 사용하거나, Chrome 브라우저로 접속해주세요.
+                </p>
+                <a
+                  href={`intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`}
+                  className="text-[11px] text-primary underline underline-offset-2"
+                >
+                  Chrome으로 열기 →
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Google */}
           <Button
             variant="outline"
-            className="w-full h-12 gap-2.5 border-border bg-card hover:bg-muted font-medium"
+            className="w-full h-12 gap-2.5 border-border bg-card hover:bg-muted font-medium disabled:opacity-40"
             onClick={handleGoogle}
-            disabled={loading !== null}
+            disabled={loading !== null || isSamsungBrowser}
           >
             {loading === 'google' ? (
               <Loader2 className="h-4 w-4 animate-spin" />

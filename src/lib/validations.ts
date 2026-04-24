@@ -10,10 +10,10 @@ export const runSchema = z.object({
   minutes: z.number().int().min(0).max(59),
   seconds: z.number().int().min(0).max(59),
   avg_heart_rate_bpm: z
-    .number()
-    .int()
-    .min(40)
-    .max(250)
+    .number({ message: '숫자를 입력해주세요.' })
+    .int('정수를 입력해주세요.')
+    .min(40, '40~250 사이의 값을 입력해주세요.')
+    .max(250, '40~250 사이의 값을 입력해주세요.')
     .optional()
     .nullable(),
 }).refine(

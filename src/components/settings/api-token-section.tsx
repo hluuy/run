@@ -148,7 +148,7 @@ export function ApiTokenSection() {
                 <div className="rounded-lg bg-blue-500/8 border border-blue-500/20 p-3 space-y-2">
                   <p className="text-xs font-medium text-blue-400">Nike Run Club 필수</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    이 단축어는 Nike Run Club 데이터를 사용합니다. 아이폰 건강 앱과 연결되어 있어야 합니다.
+                    이 단축어는 <strong className="text-foreground">당일 Nike Run Club으로 진행한 러닝 데이터만</strong> 등록합니다. 아이폰 건강 앱과 연결되어 있어야 합니다.
                   </p>
                   <PathRow steps={['설정', '건강', '데이터 접근 및 기기', 'Nike Run Club', '모두 활성화']} />
                 </div>

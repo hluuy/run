@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,10 +9,17 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
+function safeNext(next: string | null): string | null {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return null
+  return next
+}
+
 export default function OnboardingPage() {
   const [nickname, setNickname] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextUrl = safeNext(searchParams.get('next'))
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,15 +46,15 @@ export default function OnboardingPage() {
 
     if (error) {
       if (error.code === '23505') {
-        // 이미 프로필 존재 — 메인으로
-        router.push('/')
+        // 이미 프로필 존재 — next 또는 메인으로
+        router.push(nextUrl ?? '/')
       } else {
         toast.error('저장 실패: ' + error.message)
       }
       return
     }
 
-    router.push('/')
+    router.push(nextUrl ?? '/')
   }
 
   return (

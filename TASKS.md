@@ -1,4 +1,4 @@
-# 작업 현황 (2026-04-23 업데이트 2)
+# 작업 현황 (2026-04-24 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
@@ -24,10 +24,12 @@ SUPABASE_SERVICE_ROLE_KEY=
 ## 구현 완료
 
 ### 인증
-- Google OAuth 로그인
-- 이메일 입력만으로 즉시 로그인 (OTP 없음)
-  - `POST /api/auth/directlogin` → `admin.generateLink` → `verifyOtp(token_hash)` 방식
+- Google OAuth 로그인 (삼성 인터넷 브라우저 차단 감지 + Chrome 열기 안내 포함)
+- 이메일 로그인 (`POST /api/auth/directlogin`)
+  - **기존 사용자:** `admin.listUsers()`로 확인 → `admin.generateLink` → `verifyOtp(token_hash)` 즉시 로그인 (이메일 미발송)
+  - **신규 사용자:** `signInWithOtp` → 실제 이메일 인증 링크 발송 → "이메일을 확인해주세요" 화면
   - 이전 OTP 6자리 흐름은 `src/app/auth/login/page.tsx`에 주석으로 보존
+- 초대 링크 경유 로그인: `?next=` 파라미터로 로그인 완료 후 초대 페이지 자동 복귀 (이메일·Google·온보딩 모두)
 - 로그아웃 후 뒤로가기 방어: `src/components/layout/auth-guard.tsx`
 
 ### 러닝 기록
@@ -111,6 +113,20 @@ SUPABASE_SERVICE_ROLE_KEY=
 - [x] **KST 유틸 추출** — `src/lib/kst.ts` (`nowKST()`, `todayKST()`) 중앙화
 - [x] **sw.js gitignore** — next-pwa 빌드 산출물(`public/sw.js`, `public/workbox-*.js`) 제외
 
+### 2026-04-24 작업 완료
+- [x] **Shortcuts 설명 수정** — NRC 안내 문구에 "당일 러닝 데이터만 등록" 명시 (`api-token-section.tsx`)
+- [x] **심박수 에러 메시지 한국어** — Zod 기본 영문 메시지 → "40~250 사이의 값을 입력해주세요." (`validations.ts`)
+- [x] **삼성 인터넷 브라우저 처리** — `SamsungBrowser` UA 감지 → Google 로그인 비활성화 + 경고 배너 + `intent://` Chrome 열기 링크 (`login/page.tsx`)
+- [x] **이메일 로그인 분기 처리** — 기존 사용자 즉시 로그인 / 신규 사용자 이메일 인증 (`directlogin/route.ts`, `login/page.tsx`)
+  - `admin.listUsers()`로 이메일 존재 여부 확인
+  - 기존 사용자: `generateLink` → `verifyOtp` 즉시 로그인 (이메일 미발송)
+  - 신규 사용자: `signInWithOtp` → 실제 이메일 인증 링크 발송 → 이메일 확인 UI 표시
+  - 신규 사용자 이메일 인증 후에도 `?next=` 파라미터 유지 (초대 링크 복귀 포함)
+- [x] **초대 링크 로그인 후 복귀** — 비로그인 상태로 `/invite/[token]` 접속 후 로그인 완료 시 초대 페이지로 자동 복귀
+  - `?next=` 파라미터를 이메일 로그인, Google OAuth, 온보딩 3곳 모두에 전파
+  - 신규 가입자는 온보딩 완료 후 초대 페이지로 이동
+  - open-redirect 방지: `/`로 시작하고 `//`로 시작하지 않는 경로만 허용
+
 ### 예정 작업
 
 - [ ] **앱 정보 & 버전 관리** — 설정 화면에 앱 버전 + 변경 이력 섹션 추가
@@ -128,10 +144,7 @@ SUPABASE_SERVICE_ROLE_KEY=
   - **결정 필요:** ① 어떤 상황에서 알림? (러닝 기록 / 목표 달성 / 리마인더 등) ② 알림 수신 대상? (그룹 전체 / 본인만)
 
 ### 미결 이슈
-- [ ] **directlogin 보안 강화** — 현재 이메일만 알면 `token_hash`를 받아 즉시 로그인 가능한 구조 (이메일 발송 없음)
-  - 옵션 A: 허용 이메일 목록(`ALLOWED_EMAILS` 환경변수)으로 접근 제한
-  - 옵션 B: 실제 매직 링크 이메일 발송 방식으로 복원 (`src/app/auth/login/page.tsx` 주석 참고)
-  - 현재는 신뢰 그룹 전용이므로 위험 감수 상태 — 추후 재검토 예정
+- [x] **directlogin 보안 강화** — 기존 사용자 즉시 로그인 / 신규 사용자 이메일 인증으로 해결됨 (미결 이슈 종결)
 
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
@@ -157,7 +170,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 | 미들웨어 | `proxy.ts` 사용. `middleware.ts` 절대 생성 금지 (충돌) |
 | 그룹 리더보드 | `get_group_leaderboard` SECURITY DEFINER RPC |
 | 심박수 필드 | `setValueAs` 사용 (`valueAsNumber` 충돌) |
-| 로그인 | 이메일 → 즉시 로그인 (OTP 비활성화 상태) |
+| 로그인 | 기존 사용자: 이메일 즉시 로그인 / 신규 사용자: 이메일 인증 후 로그인 |
 | 데이터 캐싱 | SWR `'auth-user'` 키 공유 — getUser() 중복 호출 금지, useSWR로 통일 |
 
 ---
