@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ function safeNext(next: string | null): string | null {
   return next
 }
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const [nickname, setNickname] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -90,5 +90,13 @@ export default function OnboardingPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingContent />
+    </Suspense>
   )
 }
