@@ -168,6 +168,11 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 설정 화면 하단 "앱 정보" 섹션: 현재 버전 + 최근 업데이트 내용 (2~3줄 요약)
   - 변경 이력은 코드 내 상수로 관리 (`src/lib/changelog.ts`)
 
+- [ ] **PWA 자동로그인 (세션 영속)** — task kill 후 재진입 시 로그인 유지
+  - 쿠키 maxAge 1년 설정은 완료 (2026-04-25)
+  - Supabase Dashboard → Project Settings → Auth → **Refresh Token Duration** 값 늘리기 (기본 7일 → 30일 권장, 초 단위 입력)
+  - 설정 후 PWA 재설치 필요 (기존 세션 쿠키 갱신)
+
 - [ ] **PWA 푸시 알림** — 트리거/수신 대상 결정 후 구현
   - VAPID 키 쌍 생성 → Vercel 환경변수 등록
   - `push_subscriptions` 테이블 추가 (user_id, subscription JSON)
