@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogContent,
@@ -289,40 +288,29 @@ export function ApiTokenSection() {
         </div>
       )}
 
-      <Separator />
-
-      {/* 토큰 목록 */}
+      {/* 토큰 메타 정보 */}
       {fetching ? (
-        <div className="flex justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       ) : tokens.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">발급된 토큰이 없습니다.</p>
+        <p className="text-xs text-muted-foreground text-center py-2">발급된 토큰이 없습니다.</p>
       ) : (
-        <div className="space-y-2">
-          {tokens.map((token) => (
-            <div key={token.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
-              <div>
-                <p className="text-xs font-mono text-muted-foreground">
-                  {token.id.slice(0, 8)}…
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  발급: {new Date(token.created_at).toLocaleDateString('ko-KR')}
-                  {token.last_used_at && (
-                    <> · 최근 사용: {new Date(token.last_used_at).toLocaleDateString('ko-KR')}</>
-                  )}
-                </p>
-              </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={() => deleteToken(token.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+        <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+          <p className="text-[11px] text-muted-foreground">
+            발급: {new Date(tokens[0].created_at).toLocaleDateString('ko-KR')}
+            {tokens[0].last_used_at && (
+              <> · 최근 사용: {new Date(tokens[0].last_used_at).toLocaleDateString('ko-KR')}</>
+            )}
+          </p>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => deleteToken(tokens[0].id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
     </div>
