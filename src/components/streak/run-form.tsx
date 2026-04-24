@@ -292,7 +292,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
           <button
             type="button"
             onClick={() => adjustHR(-1)}
-            disabled={heartRate === null || heartRate <= 40}
+            disabled={heartRate == null || heartRate <= 40}
             className="flex h-12 w-12 items-center justify-center text-muted-foreground hover:text-foreground active:bg-secondary disabled:opacity-30 transition-colors"
           >
             <Minus className="h-4 w-4" />
@@ -306,7 +306,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
           <button
             type="button"
             onClick={() => adjustHR(1)}
-            disabled={heartRate != null && heartRate >= 250}
+            disabled={heartRate != null && heartRate !== undefined && heartRate >= 250}
             className="flex h-12 w-12 items-center justify-center text-muted-foreground hover:text-foreground active:bg-secondary disabled:opacity-30 transition-colors"
           >
             <Plus className="h-4 w-4" />
