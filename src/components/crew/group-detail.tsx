@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2 } from 'lucide-react'
+import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2, LogOut } from 'lucide-react'
 import type { Group, LeaderboardEntry } from '@/types'
 
 function getPreviousPeriod(goalType: string): { start: string; end: string } {
@@ -204,6 +204,8 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   const [isCreator, setIsCreator] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [leaving, setLeaving] = useState(false)
   const supabase = createClient()
 
   async function load() {
@@ -266,6 +268,19 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
     }
   }
 
+  async function leaveGroup() {
+    setLeaving(true)
+    const res = await fetch('/api/group-members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: group.id }),
+    })
+    setLeaving(false)
+    if (!res.ok) { toast.error('탈퇴 실패'); return }
+    toast.success(`${group.name}에서 탈퇴했습니다.`)
+    onUpdated()
+  }
+
   async function deleteGroup() {
     setDeleting(true)
     const res = await fetch(`/api/groups/${group.id}`, { method: 'DELETE' })
@@ -303,6 +318,15 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
+          {!isCreator && myId && (
+            <Button
+              size="sm" variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => setConfirmLeave(true)}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -317,6 +341,22 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
             </Button>
             <Button size="sm" variant="destructive" className="flex-1 h-7 text-xs" onClick={deleteGroup} disabled={deleting}>
               {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : '삭제'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 탈퇴 확인 */}
+      {confirmLeave && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+          <p className="text-xs text-destructive font-medium">크루에서 탈퇴하시겠습니까?</p>
+          <p className="text-xs text-muted-foreground">탈퇴 후 초대 링크로 다시 참여할 수 있습니다.</p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => setConfirmLeave(false)}>
+              취소
+            </Button>
+            <Button size="sm" variant="destructive" className="flex-1 h-7 text-xs" onClick={leaveGroup} disabled={leaving}>
+              {leaving ? <Loader2 className="h-3 w-3 animate-spin" /> : '탈퇴'}
             </Button>
           </div>
         </div>
