@@ -10,9 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Copy, Plus, Trash2, Loader2, HelpCircle, Smartphone, Zap, Key, CheckCircle, ChevronRight } from 'lucide-react'
+import { Copy, Plus, RefreshCw, Trash2, Loader2, HelpCircle, Smartphone, Zap, Key, CheckCircle, ChevronRight, AlertTriangle } from 'lucide-react'
 
 function StepBlock({ num, icon, title, children }: {
   num: string
@@ -66,6 +68,7 @@ export function ApiTokenSection() {
   const [savedToken, setSavedToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false)
 
   useEffect(() => {
     setSavedToken(localStorage.getItem(STORAGE_KEY))
@@ -76,6 +79,7 @@ export function ApiTokenSection() {
   }, [])
 
   async function generateToken() {
+    setRenewDialogOpen(false)
     setLoading(true)
     const res = await fetch('/api/tokens', { method: 'POST' })
     const data = await res.json()
@@ -85,8 +89,16 @@ export function ApiTokenSection() {
 
     localStorage.setItem(STORAGE_KEY, data.token)
     setSavedToken(data.token)
-    setTokens((prev) => [{ id: data.id, created_at: data.created_at, last_used_at: null }, ...prev])
-    toast.success('토큰이 생성됐습니다!')
+    setTokens([{ id: data.id, created_at: data.created_at, last_used_at: null }])
+    toast.success(tokens.length > 0 ? '토큰이 재발급됐습니다.' : '토큰이 생성됐습니다.')
+  }
+
+  function handleTokenButtonClick() {
+    if (tokens.length > 0) {
+      setRenewDialogOpen(true)
+    } else {
+      generateToken()
+    }
   }
 
   async function deleteToken(id: string) {
@@ -222,11 +234,42 @@ export function ApiTokenSection() {
             </DialogContent>
           </Dialog>
         </div>
-        <Button size="sm" variant="outline" onClick={generateToken} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          <span className="ml-1.5">발급</span>
+        <Button size="sm" variant="outline" onClick={handleTokenButtonClick} disabled={loading || fetching}>
+          {loading
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : tokens.length > 0
+              ? <RefreshCw className="h-4 w-4" />
+              : <Plus className="h-4 w-4" />}
+          <span className="ml-1.5">{tokens.length > 0 ? '재발급' : '발급'}</span>
         </Button>
       </div>
+
+      {/* 재발급 경고 다이얼로그 */}
+      <Dialog open={renewDialogOpen} onOpenChange={setRenewDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              토큰 재발급
+            </DialogTitle>
+            <DialogDescription className="text-left leading-relaxed pt-1">
+              기존 토큰이 <strong className="text-foreground">즉시 삭제</strong>되고 새 토큰이 발급됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-3 text-xs text-muted-foreground leading-relaxed">
+            재발급 후에는 단축어 앱을 열어 <strong className="text-foreground">Authorization 헤더 값</strong>을 새 토큰으로 직접 변경해야 합니다. 변경 전까지 단축어 자동화가 작동하지 않습니다.
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setRenewDialogOpen(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" size="sm" onClick={generateToken} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              재발급
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 저장된 토큰 — 언제든 복사 가능 */}
       {savedToken && (

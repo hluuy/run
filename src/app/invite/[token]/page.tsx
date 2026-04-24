@@ -54,12 +54,17 @@ export default function InvitePage() {
     const km = parseFloat(goalInput)
     if (km && km > 0 && groupId) {
       setSavingGoal(true)
-      await fetch('/api/group-members/goal', {
+      const res = await fetch('/api/group-members/goal', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ group_id: groupId, goal_distance_km: km }),
       })
       setSavingGoal(false)
+      if (!res.ok) {
+        toast.warning('목표 거리 저장에 실패했습니다. 크루 페이지에서 다시 설정해주세요.')
+        router.push('/crew')
+        return
+      }
     }
     toast.success(`${group?.name}에 참여했습니다!`)
     router.push('/crew')
@@ -102,9 +107,8 @@ export default function InvitePage() {
             </label>
             <div className="relative">
               <Input
-                type="number"
-                step="0.1"
-                min="0.1"
+                type="text"
+                inputMode="decimal"
                 placeholder="예: 30"
                 value={goalInput}
                 onChange={(e) => setGoalInput(e.target.value)}

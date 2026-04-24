@@ -91,7 +91,7 @@ export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) 
           </div>
 
           {/* 날짜 그리드 */}
-          <div className="grid grid-cols-7 gap-0.5 px-3 pb-5">
+          <div className="grid grid-cols-7 gap-1 px-2 pb-4">
             {Array.from({ length: firstDow }).map((_, i) => (
               <div key={`empty-${i}`} />
             ))}
@@ -107,8 +107,10 @@ export function DatePickerSheet({ value, onChange, max }: DatePickerSheetProps) 
                   type="button"
                   onClick={() => !isFuture && selectDate(dateKey)}
                   disabled={isFuture}
+                  aria-label={`${dateKey}${isToday ? ' (오늘)' : ''}${isSelected ? ' (선택됨)' : ''}`}
+                  aria-pressed={isSelected}
                   className={cn(
-                    'flex aspect-square items-center justify-center rounded-xl text-xs font-medium transition-all select-none',
+                    'flex min-h-[40px] w-full items-center justify-center rounded-xl text-xs font-medium transition-all select-none',
                     isSelected && 'bg-primary text-primary-foreground font-bold shadow-md shadow-primary/30',
                     !isSelected && isToday && 'ring-1 ring-primary/60 text-primary',
                     !isSelected && !isToday && !isFuture && 'text-foreground hover:bg-secondary active:scale-95',

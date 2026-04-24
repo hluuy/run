@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
@@ -23,14 +23,20 @@ const STORAGE_KEY = 'rnt_saved_token'
 
 export function SettingsView() {
   const { user, profile } = useUser()
-  const [nickname, setNickname] = useState(profile?.nickname ?? '')
+  const [nickname, setNickname] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const nicknameInited = useRef(false)
 
-  if (profile && !nickname) setNickname(profile.nickname)
+  useEffect(() => {
+    if (profile && !nicknameInited.current) {
+      setNickname(profile.nickname)
+      nicknameInited.current = true
+    }
+  }, [profile])
 
   async function saveNickname() {
     if (!user || nickname.trim().length < 2) return

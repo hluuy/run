@@ -78,7 +78,8 @@ export async function POST(request: Request) {
   let body: unknown
   try {
     body = await request.json()
-  } catch {
+  } catch (err) {
+    console.error('[sync] JSON parse error:', err)
     return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
   }
 
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'duplicate' }, { status: 409 })
     }
+    console.error('[sync] DB insert error:', error)
     return NextResponse.json({ error: 'internal' }, { status: 500 })
   }
 

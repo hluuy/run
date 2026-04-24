@@ -27,6 +27,10 @@ export async function POST() {
   const hash = await hashToken(raw)
 
   const admin = createAdminClient()
+
+  // 기존 토큰 삭제 후 새 토큰으로 대체 (1인 1토큰)
+  await admin.from('api_tokens').delete().eq('user_id', user.id)
+
   const { data, error } = await admin
     .from('api_tokens')
     .insert({ user_id: user.id, token_hash: hash })

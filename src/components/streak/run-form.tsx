@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label'
 import { WheelPicker } from '@/components/ui/wheel-picker'
 import { DatePickerSheet } from '@/components/ui/date-picker-sheet'
 import { toast } from 'sonner'
-import { Loader2, Paperclip, X } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { Loader2, Paperclip, X, Minus, Plus } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { parseGpxFile, validateGpxFile } from '@/lib/gpx'
 import type { Run } from '@/types'
 
@@ -75,6 +75,14 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
   })
 
   const dateValue = watch('date')
+  const heartRate = watch('avg_heart_rate_bpm')
+
+  const adjustHR = useCallback((delta: number) => {
+    const curr = heartRate ?? (delta > 0 ? 149 : null)  // + 첫 클릭 → 150 bpm
+    if (curr === null) return
+    const next = Math.min(250, Math.max(40, curr + delta))
+    setValue('avg_heart_rate_bpm', next, { shouldValidate: true })
+  }, [heartRate, setValue])
 
   // 피커 값 → 폼 동기화
   useEffect(() => {
@@ -122,6 +130,10 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
   }
 
   async function onSubmit(values: RunFormValues) {
+    if (!navigator.onLine) {
+      toast.error('오프라인 상태입니다. 네트워크 연결 후 다시 시도해주세요.')
+      return
+    }
     setLoading(true)
     const duration_sec = values.hours * 3600 + values.minutes * 60 + values.seconds
     const avg_pace_sec_per_km = duration_sec / values.distance_km
@@ -205,6 +217,11 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
       </div>
 
       {/* GPX */}
+      {isEdit && editRun?.gpx_storage_path && (
+        <p className="text-xs text-muted-foreground rounded-lg border border-border bg-secondary/40 px-3 py-2">
+          GPX 파일은 수정할 수 없습니다. 변경이 필요하면 기록을 삭제 후 다시 추가해주세요.
+        </p>
+      )}
       {!isEdit && (
         <div className="space-y-1.5">
           <Label>GPX 파일 <span className="text-muted-foreground">(선택 — 자동으로 스탯 입력)</span></Label>
@@ -259,9 +276,45 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
 
       {/* 평균 심박수 */}
       <div className="space-y-1.5">
-        <Label htmlFor="hr">평균 심박수 <span className="text-muted-foreground">(선택)</span></Label>
-        <Input id="hr" type="number" placeholder="148"
-          {...register('avg_heart_rate_bpm', { setValueAs: (v) => v === '' || v === undefined || v === null ? null : parseInt(v, 10) })} />
+        <div className="flex items-center justify-between">
+          <Label>평균 심박수 <span className="text-muted-foreground">(선택)</span></Label>
+          {heartRate != null && (
+            <button
+              type="button"
+              onClick={() => setValue('avg_heart_rate_bpm', null, { shouldValidate: true })}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              초기화
+            </button>
+          )}
+        </div>
+        <div className="flex items-center rounded-2xl border border-border overflow-hidden bg-secondary/30">
+          <button
+            type="button"
+            onClick={() => adjustHR(-1)}
+            disabled={heartRate === null || heartRate <= 40}
+            className="flex h-12 w-12 items-center justify-center text-muted-foreground hover:text-foreground active:bg-secondary disabled:opacity-30 transition-colors"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+          <div className="flex-1 flex items-center justify-center">
+            {heartRate != null
+              ? <span className="text-xl font-semibold tabular-nums">{heartRate}</span>
+              : <span className="text-sm text-muted-foreground">— bpm</span>
+            }
+          </div>
+          <button
+            type="button"
+            onClick={() => adjustHR(1)}
+            disabled={heartRate != null && heartRate >= 250}
+            className="flex h-12 w-12 items-center justify-center text-muted-foreground hover:text-foreground active:bg-secondary disabled:opacity-30 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+          {heartRate != null && (
+            <span className="pr-4 text-sm font-medium text-muted-foreground">bpm</span>
+          )}
+        </div>
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
 

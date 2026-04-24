@@ -10,7 +10,7 @@ interface MonthStatsProps {
 }
 
 export function MonthStats({ dayMap, loading }: MonthStatsProps) {
-  const days = Array.from(dayMap.values())
+  const days = loading ? [] : Array.from(dayMap.values())
   const totalKm = days.reduce((sum, d) => sum + d.totalDistanceKm, 0)
   const runCount = days.reduce((sum, d) => sum + d.runs.length, 0)
   const avgKm = runCount > 0 ? totalKm / runCount : 0

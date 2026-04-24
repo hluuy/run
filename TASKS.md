@@ -134,6 +134,32 @@ SUPABASE_SERVICE_ROLE_KEY=
   - 신규 가입자는 온보딩 완료 후 초대 페이지로 이동
   - open-redirect 방지: `/`로 시작하고 `//`로 시작하지 않는 경로만 허용
 
+### 2026-04-24 작업 완료 (2차)
+
+- [x] **API 토큰 1인 1개 제한** — 재발급 시 기존 토큰 삭제 후 대체, 경고 다이얼로그 추가
+  - `POST /api/tokens`: 기존 토큰 삭제 후 새 토큰 INSERT (1인 1토큰)
+  - 토큰 있을 때 "재발급" 버튼 + 경고 다이얼로그 (단축어 Authorization 헤더 변경 안내)
+  - 토큰 없을 때 "발급" 버튼 → 바로 생성
+
+- [x] **심박수 입력 UI 개선** — `<input type="number">` → 커스텀 `−`/`+` 스테퍼
+  - 거리·소요시간 피커와 동일한 `rounded-2xl border bg-secondary/30` 스타일
+  - null 상태: `— bpm` 표시, `+` 첫 클릭 시 150 bpm 시작
+  - 값 있을 때: `−`/`+` 1씩 조절 (범위 40–250), 초기화 버튼
+
+- [x] **number 타입 스피너 제거** — 브라우저 기본 화살표 제거
+  - `invite/[token]/page.tsx`, `crew/group-detail.tsx` 목표 거리 입력: `type="text" inputMode="decimal"` 교체
+
+- [x] **전반적 버그 수정 및 UX 개선** (어드바이저 리뷰 기반)
+  - **오프라인 감지** (`run-form.tsx`): `navigator.onLine` 체크 → 오프라인 시 저장 차단 + 안내 토스트
+  - **무한 로딩 방지** (`group-detail.tsx`): `load()` try/finally 추가 → 네트워크 오류 시 스피너 영구 표시 버그 수정
+  - **목표 저장 실패 안내** (`invite/[token]/page.tsx`): 목표 저장 API 실패 시 warning 토스트 표시
+  - **닉네임 덮어쓰기 방지** (`settings-view.tsx`): `useEffect + ref` 방식으로 변경 → 입력 중 프로필 갱신 시 덮어쓰기 방지
+  - **편집 모드 GPX 안내** (`run-form.tsx`): 수정 모드에서 GPX 있을 때 "GPX 수정 불가" 안내 문구 표시
+  - **sync 라우트 에러 로깅** (`runs/sync/route.ts`): JSON 파싱·DB 오류 `console.error` 추가
+  - **캘린더 접근성** (`streak-calendar.tsx`): 날짜 셀에 `aria-label` 추가 (거리 정보 포함)
+  - **DatePickerSheet 접근성·터치 대상** (`date-picker-sheet.tsx`): 셀 `min-h-[40px]`, `aria-label` + `aria-pressed` 추가, gap 조정
+  - **MonthStats 로딩 중 연산 제거** (`month-stats.tsx`): 로딩 중 배열 연산 스킵
+
 ### 예정 작업
 
 - [ ] **앱 정보 & 버전 관리** — 설정 화면에 앱 버전 + 변경 이력 섹션 추가

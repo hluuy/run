@@ -145,7 +145,7 @@ function MemberCard({
       {isMe && editingGoal && (
         <div className="flex gap-2">
           <Input
-            type="number" step="0.1" min="0.1" placeholder="목표 거리 (km)"
+            type="text" inputMode="decimal" placeholder="목표 거리 (km)"
             value={goalInput}
             onChange={(e) => setGoalInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && saveGoal()}
@@ -208,30 +208,35 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
 
   async function load() {
     if (!group.goal_type) { setLoading(false); return }
-    const { start, end } = getGoalPeriod(group.goal_type)
-    const { start: ps, end: pe } = getPreviousPeriod(group.goal_type)
+    try {
+      const { start, end } = getGoalPeriod(group.goal_type)
+      const { start: ps, end: pe } = getPreviousPeriod(group.goal_type)
 
-    const [{ data: currData }, { data: prevData }, { data: memberData }] = await Promise.all([
-      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: start, p_end: end }),
-      supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: ps, p_end: pe }),
-      supabase.from('group_members').select('user_id, joined_at').eq('group_id', group.id),
-    ])
+      const [{ data: currData }, { data: prevData }, { data: memberData }] = await Promise.all([
+        supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: start, p_end: end }),
+        supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: ps, p_end: pe }),
+        supabase.from('group_members').select('user_id, joined_at').eq('group_id', group.id),
+      ])
 
-    setLeaderboard((currData as LeaderboardEntry[]) ?? [])
+      setLeaderboard((currData as LeaderboardEntry[]) ?? [])
 
-    const pm = new Map<string, number>()
-    for (const e of ((prevData as LeaderboardEntry[]) ?? [])) {
-      pm.set(e.user_id, e.total_km)
+      const pm = new Map<string, number>()
+      for (const e of ((prevData as LeaderboardEntry[]) ?? [])) {
+        pm.set(e.user_id, e.total_km)
+      }
+      setPrevKmMap(pm)
+
+      const jm = new Map<string, string>()
+      for (const m of (memberData ?? [])) {
+        jm.set(m.user_id, m.joined_at)
+      }
+      setJoinedAtMap(jm)
+      setPrevStart(ps)
+    } catch {
+      toast.error('데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setLoading(false)
     }
-    setPrevKmMap(pm)
-
-    const jm = new Map<string, string>()
-    for (const m of (memberData ?? [])) {
-      jm.set(m.user_id, m.joined_at)
-    }
-    setJoinedAtMap(jm)
-    setPrevStart(ps)
-    setLoading(false)
   }
 
   useEffect(() => {

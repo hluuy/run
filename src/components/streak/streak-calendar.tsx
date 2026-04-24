@@ -85,6 +85,10 @@ export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRu
                 <button
                   key={dateKey}
                   onClick={() => hasRun && setSelectedDay(dayData)}
+                  aria-label={hasRun
+                    ? `${dateKey} 러닝 기록 보기 (${dayData.totalDistanceKm.toFixed(1)}km)`
+                    : `${dateKey}${isToday ? ' (오늘)' : ''}`
+                  }
                   className={cn(
                     'relative flex aspect-square flex-col items-center justify-center rounded-xl text-xs font-medium transition-transform active:scale-95',
                     hasRun ? 'cursor-pointer' : 'cursor-default',
