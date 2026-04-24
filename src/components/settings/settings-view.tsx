@@ -39,7 +39,7 @@ export function SettingsView() {
   }, [profile])
 
   async function saveNickname() {
-    if (!user || nickname.trim().length < 2) return
+    if (!user || nickname.trim().length < 1) return
     setSaving(true)
     const { error } = await supabase.from('users').update({ nickname: nickname.trim() }).eq('id', user.id)
     setSaving(false)
@@ -84,7 +84,7 @@ export function SettingsView() {
                 maxLength={20}
                 placeholder="닉네임 입력"
               />
-              <Button onClick={saveNickname} disabled={saving || nickname.trim().length < 2} size="sm">
+              <Button onClick={saveNickname} disabled={saving || nickname.trim().length < 1} size="sm">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : '저장'}
               </Button>
             </div>

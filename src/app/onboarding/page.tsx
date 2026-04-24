@@ -25,8 +25,8 @@ function OnboardingContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = nickname.trim()
-    if (!trimmed || trimmed.length < 2) {
-      toast.error('닉네임은 2자 이상이어야 합니다.')
+    if (!trimmed) {
+      toast.error('닉네임을 입력해주세요.')
       return
     }
 
@@ -83,7 +83,7 @@ function OnboardingContent() {
               {nickname.length}/20
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={loading || nickname.trim().length < 2}>
+          <Button type="submit" className="w-full" disabled={loading || nickname.trim().length < 1}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             시작하기
           </Button>
