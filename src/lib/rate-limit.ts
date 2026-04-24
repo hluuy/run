@@ -20,6 +20,13 @@ export const inviteRateLimit = new Ratelimit({
   prefix: 'rl:invite',
 })
 
+// 로그인 시도 IP+email 기준 1분 5회
+export const loginRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 m'),
+  prefix: 'rl:login',
+})
+
 export function formatRetryAfter(resetAtMs: number): string {
   const totalSec = Math.ceil((resetAtMs - Date.now()) / 1000)
   const min = Math.floor(totalSec / 60)

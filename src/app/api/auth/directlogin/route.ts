@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import { loginRateLimit, formatRetryAfter } from '@/lib/rate-limit'
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,6 +14,22 @@ export async function POST(request: Request) {
   if (!body.success) return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
 
   const { email, redirectTo } = body.data
+
+  // redirectTo 검증: 자신의 origin만 허용
+  if (redirectTo) {
+    const origin = new URL(request.url).origin
+    if (!redirectTo.startsWith(`${origin}/`)) {
+      return NextResponse.json({ error: 'invalid_redirect' }, { status: 400 })
+    }
+  }
+
+  // Rate limiting: IP + email 기준 1분 5회
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { success, reset } = await loginRateLimit.limit(`${ip}:${email}`)
+  if (!success) {
+    return NextResponse.json({ error: formatRetryAfter(reset) }, { status: 429 })
+  }
+
   const admin = createAdminClient()
 
   // 기존 사용자 여부 확인 (소규모 앱 — 최대 1000명까지 스캔)

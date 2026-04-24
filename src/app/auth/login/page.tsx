@@ -157,7 +157,7 @@ export default function LoginPage() {
                   <strong className="text-foreground"> 이메일 로그인</strong>을 사용하거나, Chrome 브라우저로 접속해주세요.
                 </p>
                 <a
-                  href={`intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`}
+                  href={`intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`}
                   className="text-[11px] text-primary underline underline-offset-2"
                 >
                   Chrome으로 열기 →

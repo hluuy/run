@@ -113,6 +113,12 @@ SUPABASE_SERVICE_ROLE_KEY=
 - [x] **KST 유틸 추출** — `src/lib/kst.ts` (`nowKST()`, `todayKST()`) 중앙화
 - [x] **sw.js gitignore** — next-pwa 빌드 산출물(`public/sw.js`, `public/workbox-*.js`) 제외
 
+### 2026-04-24 보안 패치 (2차)
+- [x] **directlogin rate limiting** — IP+email 기준 1분 5회 제한 추가 (`loginRateLimit`)
+- [x] **listUsers 스캔 제거** — `generateLink({ shouldCreateUser: false })` 단일 호출로 사용자 존재 확인 (열거 공격 방지)
+- [x] **redirectTo 서버 검증** — 자신의 origin으로 시작하는 URL만 허용 (오픈 리다이렉트 방지)
+- [x] **Chrome intent URL search 누락 수정** — `window.location.search` 포함 (`login/page.tsx`)
+
 ### 2026-04-24 작업 완료
 - [x] **Shortcuts 설명 수정** — NRC 안내 문구에 "당일 러닝 데이터만 등록" 명시 (`api-token-section.tsx`)
 - [x] **심박수 에러 메시지 한국어** — Zod 기본 영문 메시지 → "40~250 사이의 값을 입력해주세요." (`validations.ts`)
@@ -144,7 +150,7 @@ SUPABASE_SERVICE_ROLE_KEY=
   - **결정 필요:** ① 어떤 상황에서 알림? (러닝 기록 / 목표 달성 / 리마인더 등) ② 알림 수신 대상? (그룹 전체 / 본인만)
 
 ### 미결 이슈
-- [x] **directlogin 보안 강화** — 기존 사용자 즉시 로그인 / 신규 사용자 이메일 인증으로 해결됨 (미결 이슈 종결)
+- [x] **directlogin 보안 강화** — rate limiting + `generateLink(shouldCreateUser:false)` 단일 호출 + redirectTo 서버 검증으로 완료
 
 - [ ] **Google 로그인 계정 자동 연동** — 기존 이메일 계정과 동일한 구글 계정으로 로그인 시 자동 병합됨
   - 예상 원인: Supabase가 동일 이메일을 같은 계정으로 인식해 자동 연결 (의도된 동작일 수 있음)
