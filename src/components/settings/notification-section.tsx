@@ -14,14 +14,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output
 }
 
+async function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('sw-timeout')), timeoutMs)
+    ),
+  ])
+}
+
 async function getSubscription(): Promise<PushSubscription | null> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null
-  const reg = await navigator.serviceWorker.ready
+  const reg = await swReady()
   return reg.pushManager.getSubscription()
 }
 
 async function subscribe(): Promise<PushSubscription | null> {
-  const reg = await navigator.serviceWorker.ready
+  const reg = await swReady()
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   if (!key) return null
   return reg.pushManager.subscribe({
