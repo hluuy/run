@@ -3,8 +3,25 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
+const ALLOWED_PUSH_HOSTS = [
+  'fcm.googleapis.com',
+  'updates.push.services.mozilla.com',
+  'notify.windows.com',
+  'push.apple.com',
+]
+
 const schema = z.object({
-  endpoint: z.string().url(),
+  endpoint: z.string().url().refine(
+    (url) => {
+      try {
+        const host = new URL(url).hostname
+        return ALLOWED_PUSH_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))
+      } catch {
+        return false
+      }
+    },
+    { message: 'invalid push endpoint' }
+  ),
   p256dh: z.string().min(1),
   auth: z.string().min(1),
 })
