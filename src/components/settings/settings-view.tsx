@@ -100,7 +100,7 @@ export function SettingsView() {
         </div>
 
         {/* 알림 */}
-        <NotificationSection initialEnabled={profile?.notifications_enabled ?? true} />
+        <NotificationSection />
 
         {/* 앱 정보 */}
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">

@@ -23,35 +23,29 @@ async function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
   ])
 }
 
-async function getSubscription(): Promise<PushSubscription | null> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null
-  const reg = await swReady()
-  return reg.pushManager.getSubscription()
-}
-
-async function subscribe(): Promise<PushSubscription | null> {
-  const reg = await swReady()
-  const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-  if (!key) return null
-  return reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(key),
-  })
-}
-
-interface Props {
-  initialEnabled: boolean
-}
-
-export function NotificationSection({ initialEnabled }: Props) {
-  const [enabled, setEnabled] = useState(initialEnabled)
-  const [supported, setSupported] = useState(true)
-  const [loading, setLoading] = useState(false)
+export function NotificationSection() {
+  const [enabled, setEnabled] = useState(false)
+  const [supported, setSupported] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setSupported(false)
+    if (
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window) ||
+      !('Notification' in window)
+    ) {
+      setLoading(false)
+      return
     }
+    setSupported(true)
+
+    swReady(3000)
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => {
+        setEnabled(!!sub && Notification.permission === 'granted')
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   async function toggle(on: boolean) {
@@ -64,11 +58,15 @@ export function NotificationSection({ initialEnabled }: Props) {
           return
         }
 
-        let sub = await getSubscription()
-        if (!sub) sub = await subscribe()
+        const reg = await swReady()
+        let sub = await reg.pushManager.getSubscription()
         if (!sub) {
-          toast.error('알림 설정에 실패했습니다.')
-          return
+          const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          if (!key) throw new Error('no vapid key')
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(key),
+          })
         }
 
         const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
@@ -77,28 +75,20 @@ export function NotificationSection({ initialEnabled }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
         })
+        if (!res.ok) throw new Error('subscribe failed')
 
-        if (res.ok) {
-          setEnabled(true)
-          toast.success('알림이 켜졌습니다.')
-        } else {
-          toast.error('알림 설정에 실패했습니다.')
-        }
+        setEnabled(true)
+        toast.success('알림이 켜졌습니다.')
       } else {
-        const sub = await getSubscription()
-        const endpoint = sub ? (sub.toJSON() as { endpoint: string }).endpoint : undefined
         const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint }),
+          body: JSON.stringify({}),
         })
+        if (!res.ok) throw new Error('unsubscribe failed')
 
-        if (res.ok) {
-          setEnabled(false)
-          toast.success('알림이 꺼졌습니다.')
-        } else {
-          toast.error('알림 설정에 실패했습니다.')
-        }
+        setEnabled(false)
+        toast.success('알림이 꺼졌습니다.')
       }
     } catch {
       toast.error('알림 설정에 실패했습니다.')
