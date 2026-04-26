@@ -13,7 +13,13 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  headers: async () => [{ source: '/(.*)', headers: securityHeaders }],
+  headers: async () => [
+    { source: '/(.*)', headers: securityHeaders },
+    {
+      source: '/manifest.json',
+      headers: [{ key: 'Content-Type', value: 'application/manifest+json' }],
+    },
+  ],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
   },
