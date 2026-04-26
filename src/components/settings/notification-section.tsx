@@ -15,13 +15,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output
 }
 
-function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
-  return Promise.race([
-    navigator.serviceWorker.ready,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('sw-timeout')), timeoutMs)
-    ),
-  ])
+async function swReady(timeoutMs = 10000): Promise<ServiceWorkerRegistration> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const reg = await navigator.serviceWorker.getRegistration('/')
+    if (reg?.active) return reg
+    await new Promise(r => setTimeout(r, 500))
+  }
+  throw new Error('sw-timeout')
 }
 
 export function NotificationSection() {
