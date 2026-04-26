@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: '런 트래커',
   description: '친구들과 함께하는 러닝 스트릭 트래커',
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: '런 트래커',
+    statusBarStyle: 'black-translucent',
+  },
 }
 
 export const viewport: Viewport = {
