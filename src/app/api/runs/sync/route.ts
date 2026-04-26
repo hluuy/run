@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { verifyApiToken } from '@/lib/api-token'
 import { syncRateLimit, formatRetryAfter } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendPushToUsers, formatPace } from '@/lib/push'
+import { getGoalPeriod } from '@/lib/period'
 
 const syncSchema = z.object({
   workout_source_id: z.string().min(1).optional().nullable(),
@@ -120,5 +122,77 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'internal' }, { status: 500 })
   }
 
+  // 알림 발송 (비동기, 실패해도 201 반환)
+  sendGroupNotification(userId, distance_km, avg_pace_sec_per_km, local_date_key).catch(() => {})
+
   return NextResponse.json({ run_id: data.id }, { status: 201 })
+}
+
+async function sendGroupNotification(
+  userId: string,
+  distance_km: number,
+  avg_pace_sec_per_km: number,
+  local_date_key: string
+) {
+  const admin = createAdminClient()
+
+  const { data: userData } = await admin.from('users').select('nickname').eq('id', userId).single()
+  const nickname = userData?.nickname ?? '멤버'
+
+  const { data: myGroups } = await admin
+    .from('group_members')
+    .select('group_id, goal_distance_km, groups!inner(id, name, goal_type)')
+    .eq('user_id', userId)
+
+  if (!myGroups?.length) return
+
+  const groupIds = myGroups.map((m) => m.group_id)
+
+  const { data: otherMembers } = await admin
+    .from('group_members')
+    .select('user_id')
+    .in('group_id', groupIds)
+    .neq('user_id', userId)
+
+  const otherUserIds = [...new Set((otherMembers ?? []).map((m) => m.user_id))]
+  if (!otherUserIds.length) return
+
+  const { data: enabledUsers } = await admin
+    .from('users')
+    .select('id')
+    .in('id', otherUserIds)
+    .eq('notifications_enabled', true)
+
+  const recipientIds = (enabledUsers ?? []).map((u) => u.id)
+  if (!recipientIds.length) return
+
+  await sendPushToUsers(recipientIds, {
+    title: `${nickname}이 달렸어요`,
+    body: `${distance_km.toFixed(1)}km · ${formatPace(avg_pace_sec_per_km)}/km`,
+    url: '/',
+  })
+
+  for (const membership of myGroups) {
+    if (!membership.goal_distance_km) continue
+    const group = membership.groups as unknown as { id: string; name: string; goal_type: string }
+    const { start, end, label } = getGoalPeriod(group.goal_type)
+
+    const { data: periodRuns } = await admin
+      .from('runs')
+      .select('distance_km')
+      .eq('user_id', userId)
+      .gte('local_date_key', start)
+      .lte('local_date_key', end)
+
+    const total = (periodRuns ?? []).reduce((sum, r) => sum + r.distance_km, 0)
+    const prevTotal = total - distance_km
+
+    if (total >= membership.goal_distance_km && prevTotal < membership.goal_distance_km) {
+      await sendPushToUsers(recipientIds, {
+        title: `${nickname}이 목표를 달성했어요 🎉`,
+        body: `${group.name} ${label} ${Math.round(membership.goal_distance_km)}km 목표 완료!`,
+        url: '/crew',
+      })
+    }
+  }
 }

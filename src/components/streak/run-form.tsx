@@ -196,6 +196,11 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
 
     setLoading(false)
     toast.success('러닝이 기록됐습니다! 🏃')
+    fetch('/api/push/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ distance_km: values.distance_km, avg_pace_sec_per_km, local_date_key }),
+    }).catch(() => {})
     reset({ date: todayKST(), hours: 0, minutes: 0, seconds: 0, avg_heart_rate_bpm: null })
     setDistInt(5); setDistDec(0)
     setPickHours(0); setPickMinutes(0); setPickSeconds(0)

@@ -16,8 +16,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { ApiTokenSection } from './api-token-section'
+import { NotificationSection } from './notification-section'
 import { toast } from 'sonner'
-import { Loader2, TriangleAlert } from 'lucide-react'
+import { Loader2, TriangleAlert, ChevronDown } from 'lucide-react'
 import { CHANGELOG } from '@/lib/changelog'
 
 const STORAGE_KEY = 'rnt_saved_token'
@@ -28,6 +29,7 @@ export function SettingsView() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showAllVersions, setShowAllVersions] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const nicknameInited = useRef(false)
@@ -97,30 +99,63 @@ export function SettingsView() {
           <ApiTokenSection />
         </div>
 
+        {/* 알림 */}
+        <NotificationSection initialEnabled={profile?.notifications_enabled ?? true} />
+
         {/* 앱 정보 */}
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="font-medium text-sm">앱 정보</p>
             <span className="text-xs text-muted-foreground">v{CHANGELOG[0].version}</span>
           </div>
-          <div className="space-y-3">
-            {CHANGELOG.map((entry) => (
-              <div key={entry.version}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-primary">v{entry.version}</span>
-                  <span className="text-xs text-muted-foreground">{entry.date}</span>
-                </div>
-                <ul className="space-y-0.5">
-                  {entry.features.map((f) => (
-                    <li key={f} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <span className="mt-0.5 shrink-0">·</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          {/* 최신 버전 항상 표시 */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-primary">v{CHANGELOG[0].version}</span>
+              <span className="text-xs text-muted-foreground">{CHANGELOG[0].date}</span>
+              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">최신</span>
+            </div>
+            <ul className="space-y-0.5">
+              {CHANGELOG[0].features.map((f) => (
+                <li key={f} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                  <span className="mt-0.5 shrink-0">·</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
           </div>
+          {/* 이전 버전 토글 */}
+          {CHANGELOG.length > 1 && (
+            <>
+              <button
+                onClick={() => setShowAllVersions((v) => !v)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllVersions ? 'rotate-180' : ''}`} />
+                {showAllVersions ? '이전 버전 숨기기' : `이전 버전 ${CHANGELOG.length - 1}개 보기`}
+              </button>
+              {showAllVersions && (
+                <div className="space-y-3 pt-1 border-t border-border">
+                  {CHANGELOG.slice(1).map((entry) => (
+                    <div key={entry.version}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-muted-foreground">v{entry.version}</span>
+                        <span className="text-xs text-muted-foreground">{entry.date}</span>
+                      </div>
+                      <ul className="space-y-0.5">
+                        {entry.features.map((f) => (
+                          <li key={f} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <span className="mt-0.5 shrink-0">·</span>
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* 로그아웃 / 계정 삭제 */}

@@ -8,15 +8,45 @@ export interface Database {
           id: string
           nickname: string
           created_at: string
+          notifications_enabled: boolean
         }
         Insert: {
           id: string
           nickname: string
           created_at?: string
+          notifications_enabled?: boolean
         }
         Update: {
           id?: string
           nickname?: string
+          created_at?: string
+          notifications_enabled?: boolean
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
           created_at?: string
         }
         Relationships: []
