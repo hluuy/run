@@ -65,15 +65,31 @@ export function NotificationSection() {
           return
         }
 
-        const reg = await swReady(5000)
+        let reg: ServiceWorkerRegistration
+        try {
+          reg = await swReady(5000)
+        } catch {
+          toast.error('서비스 워커 준비 실패. 앱을 다시 열어주세요.')
+          return
+        }
+
+        const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!key) {
+          toast.error('VAPID 키 누락 — 환경변수를 확인해주세요.')
+          return
+        }
+
         let sub = await reg.pushManager.getSubscription()
         if (!sub) {
-          const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-          if (!key) throw new Error('VAPID key missing')
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(key),
-          })
+          try {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(key),
+            })
+          } catch (e) {
+            toast.error(`구독 실패: ${e instanceof Error ? e.message : String(e)}`)
+            return
+          }
         }
 
         const json = sub.toJSON() as {
@@ -81,7 +97,8 @@ export function NotificationSection() {
           keys?: { p256dh: string; auth: string }
         }
         if (!json.keys?.p256dh || !json.keys?.auth) {
-          throw new Error('subscription keys missing')
+          toast.error('구독 키 누락 — 브라우저가 Web Push를 지원하지 않을 수 있습니다.')
+          return
         }
 
         const res = await fetch('/api/push/subscribe', {
@@ -93,12 +110,15 @@ export function NotificationSection() {
             auth: json.keys.auth,
           }),
         })
-        if (!res.ok) throw new Error('subscribe API failed')
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          toast.error(`서버 오류 (${res.status}): ${errBody.error ?? '알 수 없음'}`)
+          return
+        }
 
         setEnabled(true)
         toast.success('알림이 켜졌습니다.')
       } else {
-        // Server side handles unsubscribing from pushManager — don't call sub.unsubscribe() here
         const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
@@ -109,8 +129,8 @@ export function NotificationSection() {
         setEnabled(false)
         toast.success('알림이 꺼졌습니다.')
       }
-    } catch {
-      toast.error('알림 설정에 실패했습니다.')
+    } catch (e) {
+      toast.error(`알림 설정 실패: ${e instanceof Error ? e.message : String(e)}`)
     } finally {
       setLoading(false)
     }
