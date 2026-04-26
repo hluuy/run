@@ -47,54 +47,55 @@ export function NotificationSection({ initialEnabled }: Props) {
 
   async function toggle(on: boolean) {
     setLoading(true)
+    try {
+      if (on) {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          toast.error('브라우저에서 알림을 허용해주세요.')
+          return
+        }
 
-    if (on) {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        toast.error('브라우저에서 알림을 허용해주세요.')
-        setLoading(false)
-        return
-      }
+        let sub = await getSubscription()
+        if (!sub) sub = await subscribe()
+        if (!sub) {
+          toast.error('알림 설정에 실패했습니다.')
+          return
+        }
 
-      let sub = await getSubscription()
-      if (!sub) sub = await subscribe()
-      if (!sub) {
-        toast.error('알림 설정에 실패했습니다.')
-        setLoading(false)
-        return
-      }
+        const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+        const res = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+        })
 
-      const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
-      })
-
-      if (res.ok) {
-        setEnabled(true)
-        toast.success('알림이 켜졌습니다.')
+        if (res.ok) {
+          setEnabled(true)
+          toast.success('알림이 켜졌습니다.')
+        } else {
+          toast.error('알림 설정에 실패했습니다.')
+        }
       } else {
-        toast.error('알림 설정에 실패했습니다.')
-      }
-    } else {
-      const sub = await getSubscription()
-      const endpoint = sub ? (sub.toJSON() as { endpoint: string }).endpoint : undefined
-      const res = await fetch('/api/push/subscribe', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint }),
-      })
+        const sub = await getSubscription()
+        const endpoint = sub ? (sub.toJSON() as { endpoint: string }).endpoint : undefined
+        const res = await fetch('/api/push/subscribe', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint }),
+        })
 
-      if (res.ok) {
-        setEnabled(false)
-        toast.success('알림이 꺼졌습니다.')
-      } else {
-        toast.error('알림 설정에 실패했습니다.')
+        if (res.ok) {
+          setEnabled(false)
+          toast.success('알림이 꺼졌습니다.')
+        } else {
+          toast.error('알림 설정에 실패했습니다.')
+        }
       }
+    } catch {
+      toast.error('알림 설정에 실패했습니다.')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   if (!supported) return null
@@ -105,7 +106,7 @@ export function NotificationSection({ initialEnabled }: Props) {
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <Label htmlFor="notif-toggle" className="text-sm">크루 알림 받기</Label>
-          <p className="text-xs text-muted-foreground">멤버 러닝 기록, 목표 달성, 어제 기록 없음</p>
+          <p className="text-xs text-muted-foreground">멤버 러닝 기록 및 목표 달성 시 알림</p>
         </div>
         <Switch
           id="notif-toggle"
