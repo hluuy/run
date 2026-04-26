@@ -18,6 +18,7 @@ import {
 import { ApiTokenSection } from './api-token-section'
 import { toast } from 'sonner'
 import { Loader2, TriangleAlert } from 'lucide-react'
+import { CHANGELOG } from '@/lib/changelog'
 
 const STORAGE_KEY = 'rnt_saved_token'
 
@@ -94,6 +95,32 @@ export function SettingsView() {
         {/* API 토큰 */}
         <div className="rounded-2xl border border-border bg-card p-4">
           <ApiTokenSection />
+        </div>
+
+        {/* 앱 정보 */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-sm">앱 정보</p>
+            <span className="text-xs text-muted-foreground">v{CHANGELOG[0].version}</span>
+          </div>
+          <div className="space-y-3">
+            {CHANGELOG.map((entry) => (
+              <div key={entry.version}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-primary">v{entry.version}</span>
+                  <span className="text-xs text-muted-foreground">{entry.date}</span>
+                </div>
+                <ul className="space-y-0.5">
+                  {entry.features.map((f) => (
+                    <li key={f} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">·</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 로그아웃 / 계정 삭제 */}
