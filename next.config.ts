@@ -30,4 +30,6 @@ export default withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // manifest.json을 SW precache에서 제외 — SW가 JSON 대신 캐시된 HTML 반환하는 오류 방지
+  buildExcludes: [/manifest\.json$/],
 })(nextConfig)

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   // 유저가 속한 그룹 목록
   const { data: myGroups } = await admin
     .from('group_members')
-    .select('group_id, goal_distance_km, groups!inner(id, name, goal_type)')
+    .select('group_id, groups!inner(id, name, goal_type, goal_distance_km)')
     .eq('user_id', user.id)
 
   if (!myGroups?.length) return NextResponse.json({ ok: true })
@@ -65,8 +65,8 @@ export async function POST(request: Request) {
 
       // 목표 달성 여부 체크 (그룹별)
       for (const membership of myGroups) {
-        if (!membership.goal_distance_km) continue
-        const group = membership.groups as unknown as { id: string; name: string; goal_type: string }
+        const group = membership.groups as unknown as { id: string; name: string; goal_type: string; goal_distance_km: number }
+        if (!group.goal_distance_km) continue
         const { start, end, label } = getGoalPeriod(group.goal_type)
 
         const { data: periodRuns } = await admin
@@ -79,10 +79,10 @@ export async function POST(request: Request) {
         const total = (periodRuns ?? []).reduce((sum, r) => sum + r.distance_km, 0)
         const prevTotal = total - distance_km
 
-        if (total >= membership.goal_distance_km && prevTotal < membership.goal_distance_km) {
+        if (total >= group.goal_distance_km && prevTotal < group.goal_distance_km) {
           await sendPushToUsers(recipientIds, {
             title: `${nickname}이 목표를 달성했어요 🎉`,
-            body: `${group.name} ${label} ${Math.round(membership.goal_distance_km)}km 목표 완료!`,
+            body: `${group.name} ${label} ${Math.round(group.goal_distance_km)}km 목표 완료!`,
             url: '/crew',
           })
         }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -14,7 +15,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output
 }
 
-async function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
+function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
   return Promise.race([
     navigator.serviceWorker.ready,
     new Promise<never>((_, reject) =>
@@ -24,8 +25,9 @@ async function swReady(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
 }
 
 export function NotificationSection() {
+  // null = not yet determined (show nothing), false/true = known support state
+  const [supported, setSupported] = useState<boolean | null>(null)
   const [enabled, setEnabled] = useState(false)
-  const [supported, setSupported] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,17 +36,22 @@ export function NotificationSection() {
       !('PushManager' in window) ||
       !('Notification' in window)
     ) {
+      setSupported(false)
       setLoading(false)
       return
     }
+
     setSupported(true)
 
-    swReady(3000)
+    swReady(5000)
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
         setEnabled(!!sub && Notification.permission === 'granted')
       })
-      .catch(() => {})
+      .catch(() => {
+        // SW not ready or timed out — treat as disabled
+        setEnabled(false)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -58,34 +65,46 @@ export function NotificationSection() {
           return
         }
 
-        const reg = await swReady()
+        const reg = await swReady(5000)
         let sub = await reg.pushManager.getSubscription()
         if (!sub) {
           const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-          if (!key) throw new Error('no vapid key')
+          if (!key) throw new Error('VAPID key missing')
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(key),
           })
         }
 
-        const { endpoint, keys } = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+        const json = sub.toJSON() as {
+          endpoint: string
+          keys?: { p256dh: string; auth: string }
+        }
+        if (!json.keys?.p256dh || !json.keys?.auth) {
+          throw new Error('subscription keys missing')
+        }
+
         const res = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+          body: JSON.stringify({
+            endpoint: json.endpoint,
+            p256dh: json.keys.p256dh,
+            auth: json.keys.auth,
+          }),
         })
-        if (!res.ok) throw new Error('subscribe failed')
+        if (!res.ok) throw new Error('subscribe API failed')
 
         setEnabled(true)
         toast.success('알림이 켜졌습니다.')
       } else {
+        // Server side handles unsubscribing from pushManager — don't call sub.unsubscribe() here
         const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         })
-        if (!res.ok) throw new Error('unsubscribe failed')
+        if (!res.ok) throw new Error('unsubscribe API failed')
 
         setEnabled(false)
         toast.success('알림이 꺼졌습니다.')
@@ -97,7 +116,8 @@ export function NotificationSection() {
     }
   }
 
-  if (!supported) return null
+  // Don't render until we know whether push is supported
+  if (supported !== true) return null
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
@@ -107,12 +127,15 @@ export function NotificationSection() {
           <Label htmlFor="notif-toggle" className="text-sm">크루 알림 받기</Label>
           <p className="text-xs text-muted-foreground">멤버 러닝 기록 및 목표 달성 시 알림</p>
         </div>
-        <Switch
-          id="notif-toggle"
-          checked={enabled}
-          onCheckedChange={toggle}
-          disabled={loading}
-        />
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        ) : (
+          <Switch
+            id="notif-toggle"
+            checked={enabled}
+            onCheckedChange={toggle}
+          />
+        )}
       </div>
     </div>
   )
