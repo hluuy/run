@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withPWA = require('next-pwa')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { version } = require('./package.json')
 
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -12,6 +14,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   headers: async () => [{ source: '/(.*)', headers: securityHeaders }],
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version,
+  },
 }
 
 export default withPWA({

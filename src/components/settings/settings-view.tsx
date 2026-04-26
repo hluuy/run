@@ -106,7 +106,7 @@ export function SettingsView() {
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="font-medium text-sm">앱 정보</p>
-            <span className="text-xs text-muted-foreground">v{CHANGELOG[0].version}</span>
+            <span className="text-xs text-muted-foreground">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
           </div>
           {/* 최신 버전 항상 표시 */}
           <div>
