@@ -189,8 +189,8 @@ async function sendGroupNotification(
 
     if (total >= membership.goal_distance_km && prevTotal < membership.goal_distance_km) {
       await sendPushToUsers(recipientIds, {
-        title: `${nickname}님이 목표를 달성했어요 🎉`,
-        body: `${group.name} ${label} ${Math.round(membership.goal_distance_km)}km 목표 완료!`,
+        title: `${nickname}님이 ${label} 목표를 달성했어요 🎉`,
+        body: '',
         url: '/crew',
       })
     }
