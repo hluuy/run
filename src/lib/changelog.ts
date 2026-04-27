@@ -6,6 +6,11 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.2',
+    date: '2026-04-27',
+    features: ['iOS PWA 알림 토글 수정'],
+  },
+  {
     version: '1.4.0',
     date: '2026-04-26',
     features: ['푸시 알림 (런 기록, 목표 달성, 어제 기록 없음)', '알림 on/off 설정'],

@@ -27,59 +27,6 @@ CRON_SECRET=
 
 ---
 
-## 🚨 내일 최우선 작업
-
-### 알림 토글 — iOS PWA에서 동작 안 함
-
-**증상:** 알림 토글 ON 시 "서비스 워커 준비 실패. 앱을 다시 열어주세요." 오류
-
-**원인 분석:**
-- `navigator.serviceWorker.ready`가 iOS PWA에서 resolve되지 않는 알려진 문제
-- 최신 커밋(f1d19d8)에서 `polling 방식`으로 교체 (`getRegistration()` + 500ms 루프, 10초 타임아웃)
-- 배포 후 재확인 필요
-
-**다음 시도할 것 (아직 미시도):**
-1. 배포 후 토글 재시도 → 오류 메시지 확인
-   - "서비스 워커 준비 실패" → SW 자체가 등록 안 됨. Vercel에서 `sw.js` 접근 가능한지 확인
-   - "구독 실패: ..." → iOS가 push subscription 자체를 거부. 엔드포인트 도메인 화이트리스트 문제 가능성
-   - "서버 오류 4xx" → subscribe API 문제
-2. iOS에서 `/sw.js` URL 직접 열어보기 — 파일이 정상 서빙되는지 확인
-3. 만약 SW가 등록은 됐지만 `active` 상태가 아니라면 → `skipWaiting` 동작 확인
-4. Vercel 배포 로그에서 `push/subscribe` API 호출 성공 여부 확인
-
-**관련 파일:**
-- `src/components/settings/notification-section.tsx` — 토글 UI + swReady 로직
-- `src/app/api/push/subscribe/route.ts` — 구독 저장 API (ALLOWED_PUSH_HOSTS 화이트리스트 있음)
-- `src/app/api/push/notify/route.ts` — 러닝 기록 시 푸시 발송
-- `src/lib/push.ts` — web-push sendNotification 래퍼
-- `worker/index.js` — SW push/notificationclick 핸들러
-- `vercel.json` — cron 설정 (`0 3 * * *` = 매일 12:00 KST)
-
-**알림 흐름:**
-1. 사용자가 토글 ON → `pushManager.subscribe()` → `POST /api/push/subscribe` → `push_subscriptions` 테이블 저장
-2. 러닝 기록 저장 → `fetch('/api/push/notify')` → 같은 그룹 멤버에게 web-push 발송
-3. 매일 12:00 KST → Vercel cron → `GET /api/push/cron` → 어제 기록 없는 사용자에게 리마인더
-
-**Supabase 테이블 확인 필요:**
-- `push_subscriptions` 테이블 존재 여부 (없으면 SQL 실행 필요)
-- `users.notifications_enabled` 컬럼 존재 여부
-
-```sql
--- push_subscriptions 테이블 (없으면 생성)
-CREATE TABLE IF NOT EXISTS push_subscriptions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES users(id) ON DELETE CASCADE,
-  endpoint text NOT NULL,
-  p256dh text NOT NULL,
-  auth text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(user_id, endpoint)
-);
-
--- users 테이블에 notifications_enabled 컬럼 (없으면 추가)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled boolean DEFAULT true;
-```
-
 ---
 
 ## 구현 완료
@@ -110,7 +57,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled boolean DEFAULT
 - API 토큰: `localStorage('rnt_saved_token')`에 원문 저장 → 언제든 복사 가능
 - Shortcuts 6단계 설정 도움말
 - 앱 정보 & 버전 히스토리 (v1.3.0~)
-- **알림 토글 UI 완성** — 실제 동작은 미결 (위 참조)
+- **알림 토글** — iOS PWA 정상 동작 확인 (v1.4.2)
 
 ### PWA
 - next-pwa 설정, manifest.json, apple-touch-icon, apple-mobile-web-app-capable
@@ -158,8 +105,6 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled boolean DEFAULT
 ---
 
 ## 미결 이슈
-
-- [ ] **알림 토글 iOS PWA 동작 확인** — 내일 최우선 (위 상세 참조)
 
 - [ ] **listUsers 전체 스캔 개선** — Supabase admin JS 타입에 `generateLink.shouldCreateUser` 미지원으로 유지 중. rate limiting(1분 5회)으로 열거 공격 실용성 완화. 향후 SDK 업데이트 시 재검토
 
