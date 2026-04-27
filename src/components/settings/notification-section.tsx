@@ -17,12 +17,27 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 
 async function swReady(timeoutMs = 10000): Promise<ServiceWorkerRegistration> {
   const deadline = Date.now() + timeoutMs
+  let lastState = 'unknown'
+
   while (Date.now() < deadline) {
-    const reg = await navigator.serviceWorker.getRegistration('/')
-    if (reg?.active) return reg
+    const regs = await navigator.serviceWorker.getRegistrations()
+    const active = regs.find(r => r.active)
+    if (active) return active
+
+    if (regs.length === 0) {
+      lastState = 'no-reg'
+    } else {
+      lastState = regs
+        .map(r => r.active ? 'active' : r.waiting ? 'waiting' : r.installing ? 'installing' : 'redundant')
+        .join(',')
+      // waiting 상태면 skipWaiting 신호 전송
+      regs.forEach(r => r.waiting?.postMessage({ type: 'SKIP_WAITING' }))
+    }
+
     await new Promise(r => setTimeout(r, 500))
   }
-  throw new Error('sw-timeout')
+
+  throw new Error(`sw-timeout:${lastState}`)
 }
 
 export function NotificationSection() {
@@ -68,9 +83,10 @@ export function NotificationSection() {
 
         let reg: ServiceWorkerRegistration
         try {
-          reg = await swReady(5000)
-        } catch {
-          toast.error('서비스 워커 준비 실패. 앱을 다시 열어주세요.')
+          reg = await swReady(10000)
+        } catch (e) {
+          const state = e instanceof Error ? e.message : String(e)
+          toast.error(`서비스 워커 준비 실패 (${state}). 앱을 다시 열어주세요.`)
           return
         }
 
