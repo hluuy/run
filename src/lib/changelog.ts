@@ -6,15 +6,6 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.5.1',
-    date: '2026-04-27',
-    features: [
-      'iOS Shortcuts 알림에 크루명 추가 (웹 입력과 동일)',
-      '목표 달성 알림 body 빈 문자열 제거',
-      '알림 구독 재등록 시 stale 구독 row 자동 정리',
-    ],
-  },
-  {
     version: '1.5.0',
     date: '2026-04-27',
     features: [
