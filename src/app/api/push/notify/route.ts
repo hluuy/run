@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       // 목표 달성 여부 체크 (그룹별)
       for (const membership of myGroups) {
         const group = membership.groups as unknown as { id: string; name: string; goal_type: string; goal_distance_km: number }
+        console.log('[notify] goal check', { group: group.name, goal: group.goal_distance_km })
         if (!group.goal_distance_km) continue
         const { start, end, label } = getGoalPeriod(group.goal_type)
 
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
         const total = (periodRuns ?? []).reduce((sum, r) => sum + r.distance_km, 0)
         const prevTotal = total - distance_km
 
-        console.log('[notify] goal check', { group: group.name, goal: group.goal_distance_km, total, prevTotal })
+        console.log('[notify] goal total', { total, prevTotal, goal: group.goal_distance_km })
 
         if (total >= group.goal_distance_km && prevTotal < group.goal_distance_km) {
           await sendPushToUsers(recipientIds, {
