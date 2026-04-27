@@ -84,7 +84,6 @@ export async function POST(request: Request) {
         if (total >= membership.goal_distance_km && prevTotal < membership.goal_distance_km) {
           await sendPushToUsers(recipientIds, {
             title: `${nickname}님이 ${label} 목표를 달성했어요 🎉`,
-            body: '',
             url: '/crew',
           })
         }

@@ -4,7 +4,7 @@
 - **프로덕션:** https://runstreak-nine.vercel.app
 - **GitHub:** https://github.com/hluuy/run
 - **스택:** Next.js 15, Supabase, Vercel, Tailwind CSS 4, shadcn/ui
-- **현재 버전:** 1.4.2
+- **현재 버전:** 1.5.1
 
 ## 로컬 실행
 
@@ -73,6 +73,20 @@ CRON_SECRET=
 
 ## 2026-04-27 작업 완료
 
+### v1.5.1 (버그픽스)
+- [x] **Shortcuts 알림 크루명 누락 수정** — `sync/route.ts` run 알림 body에 `groupNames` 추가 (`notify/route.ts`와 통일)
+- [x] **목표 달성 알림 body 빈 문자열 제거** — `body: ''` → body 키 생략. `PushPayload.body` 타입을 `string | undefined`로 변경
+- [x] **구독 stale row 누적 방지** — `POST /api/push/subscribe` 시 기존 구독 전체 삭제 후 재삽입 (upsert 대체)
+
+### v1.5.0 (기능)
+- [x] **설정 화면 PWA 설치 안내 카드** — 브라우저 접속 시만 표시, standalone 모드에서 자동 숨김
+  - `PwaInstallSection` 컴포넌트 신규, 프로필 섹션 위에 배치
+- [x] **알림 문구 개선** — 닉네임 뒤 조사 "님이"로 통일, 크루명 body 포함, 목표 달성 시 기간(오늘/이번 주/이번 달) 표시
+- [x] **목표 달성 알림 버그 수정** — `goal_distance_km`을 `groups` 대신 `group_members`에서 참조하도록 수정
+- [x] **구독 해제 DELETE endpoint 수정** — 클라이언트에서 endpoint 값을 DELETE body에 포함, DB row 정상 삭제 확인
+- [x] **VAPID 키 변경 시 재구독 처리** — `subscribePush()`가 항상 기존 구독 unsubscribe 후 재구독, 400 (VapidPkHashMismatch) 구독 자동 정리
+
+### 이전 작업
 - [x] **앱 정보 & 버전 관리** — 설정 화면에 버전 + 변경 이력 (v1.3.0+)
   - `src/lib/changelog.ts` 신규, `package.json` 버전 `NEXT_PUBLIC_APP_VERSION`으로 노출
   - **버전 정책:** 기능 추가 → minor 올리고 changelog 노출 / 버그픽스 → patch만 올림
@@ -81,15 +95,12 @@ CRON_SECRET=
 - [x] **푸시 알림 인프라 구축** (v1.4.0)
   - web-push VAPID, Vercel cron, push_subscriptions 테이블, worker/index.js
   - 알림 3종: 멤버 러닝 기록, 목표 달성, 어제 기록 없음(12:00 KST)
-  - `notify/route.ts` 쿼리 버그 수정: `goal_distance_km`을 group_members 대신 groups에서 참조
 - [x] **iOS PWA 알림 토글 수정** (v1.4.2)
   - `push-client.ts` 분리: `swReady()`, `subscribePush()`, `savePushSubscription()` 공통 유틸
   - SW 활성화 대기 방식: polling → `statechange` 이벤트 리스너로 교체 (timeout 60s)
   - `SWRegister` 컴포넌트: 앱 진입 시 SW 등록만 수행. 자동 권한 요청(`requestPermission`) 제거
-    - 이유: useEffect에서 자동 호출 시 iOS가 예상치 못한 시점에 권한 다이얼로그 표시 → 이후 수동 토글 시 다이얼로그 미표시
   - TypeScript 빌드 오류 수정: `urlBase64ToUint8Array` 반환 타입 `Uint8Array<ArrayBuffer>`로 명시
 - [x] **VAPID 환경변수 정비**
-  - `VAPID_PUBLIC_KEY` 누락 확인 및 신규 VAPID 키 세트 생성
   - Vercel에 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`(동일 값), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` 4종 설정 필요
   - 키 변경 후 사용자/크루원 모두 토글 껐다 켜서 재구독 필요
 

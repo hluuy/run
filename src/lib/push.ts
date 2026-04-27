@@ -12,7 +12,7 @@ function getWebPush() {
 
 export interface PushPayload {
   title: string
-  body: string
+  body?: string
   url?: string
 }
 

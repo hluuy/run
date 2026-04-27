@@ -35,12 +35,14 @@ export async function POST(request: Request) {
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
   const admin = createAdminClient()
-  await admin.from('push_subscriptions').upsert({
+  // 기기당 1개 구독 유지 — VAPID 키 변경이나 재구독 시 stale row 누적 방지
+  await admin.from('push_subscriptions').delete().eq('user_id', user.id)
+  await admin.from('push_subscriptions').insert({
     user_id: user.id,
     endpoint: body.data.endpoint,
     p256dh: body.data.p256dh,
     auth: body.data.auth,
-  }, { onConflict: 'user_id,endpoint' })
+  })
 
   await admin.from('users').update({ notifications_enabled: true }).eq('id', user.id)
 

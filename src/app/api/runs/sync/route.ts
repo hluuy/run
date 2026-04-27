@@ -147,6 +147,9 @@ async function sendGroupNotification(
   if (!myGroups?.length) return
 
   const groupIds = myGroups.map((m) => m.group_id)
+  const groupNames = myGroups
+    .map((m) => (m.groups as unknown as { name: string }).name)
+    .join(' · ')
 
   const { data: otherMembers } = await admin
     .from('group_members')
@@ -168,7 +171,7 @@ async function sendGroupNotification(
 
   await sendPushToUsers(recipientIds, {
     title: `${nickname}님이 달렸어요`,
-    body: `${distance_km.toFixed(1)}km · ${formatPace(avg_pace_sec_per_km)}/km`,
+    body: `${groupNames} · ${distance_km.toFixed(1)}km · ${formatPace(avg_pace_sec_per_km)}/km`,
     url: '/',
   })
 
@@ -190,7 +193,6 @@ async function sendGroupNotification(
     if (total >= membership.goal_distance_km && prevTotal < membership.goal_distance_km) {
       await sendPushToUsers(recipientIds, {
         title: `${nickname}님이 ${label} 목표를 달성했어요 🎉`,
-        body: '',
         url: '/crew',
       })
     }
