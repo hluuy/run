@@ -15,30 +15,45 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output
 }
 
-async function swReady(timeoutMs = 10000): Promise<ServiceWorkerRegistration> {
-  const deadline = Date.now() + timeoutMs
-  let lastState = 'unknown'
+async function swReady(timeoutMs = 60000): Promise<ServiceWorkerRegistration> {
+  // 이미 active 상태인 등록이 있으면 바로 반환
+  let regs = await navigator.serviceWorker.getRegistrations()
+  const already = regs.find(r => r.active)
+  if (already) return already
 
-  while (Date.now() < deadline) {
-    const regs = await navigator.serviceWorker.getRegistrations()
-    const active = regs.find(r => r.active)
-    if (active) return active
-
-    if (regs.length === 0) {
-      lastState = 'no-reg'
-      try { await navigator.serviceWorker.register('/sw.js', { scope: '/' }) } catch {}
-    } else {
-      lastState = regs
-        .map(r => r.active ? 'active' : r.waiting ? 'waiting' : r.installing ? 'installing' : 'redundant')
-        .join(',')
-      // waiting 상태면 skipWaiting 신호 전송
-      regs.forEach(r => r.waiting?.postMessage({ type: 'SKIP_WAITING' }))
+  // 등록이 없으면 직접 등록
+  if (regs.length === 0) {
+    try {
+      await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      regs = await navigator.serviceWorker.getRegistrations()
+    } catch {
+      throw new Error('sw-register-failed')
     }
-
-    await new Promise(r => setTimeout(r, 500))
   }
 
-  throw new Error(`sw-timeout:${lastState}`)
+  const reg = regs[0]
+  if (!reg) throw new Error('sw-no-reg')
+  if (reg.active) return reg
+
+  // installing/waiting 상태 — statechange 이벤트로 대기 (precaching 완료 대기)
+  const sw = reg.installing ?? reg.waiting
+  if (!sw) throw new Error('sw-redundant')
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`sw-timeout:${sw.state}`)),
+      timeoutMs
+    )
+    sw.addEventListener('statechange', () => {
+      if (sw.state === 'activated') {
+        clearTimeout(timer)
+        resolve(reg)
+      } else if (sw.state === 'redundant') {
+        clearTimeout(timer)
+        reject(new Error('sw-redundant'))
+      }
+    })
+  })
 }
 
 export function NotificationSection() {
