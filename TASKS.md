@@ -4,7 +4,7 @@
 - **프로덕션:** https://runstreak-nine.vercel.app
 - **GitHub:** https://github.com/hluuy/run
 - **스택:** Next.js 15, Supabase, Vercel, Tailwind CSS 4, shadcn/ui
-- **현재 버전:** 1.4.1
+- **현재 버전:** 1.4.2
 
 ## 로컬 실행
 
@@ -63,7 +63,11 @@ CRON_SECRET=
 - next-pwa 설정, manifest.json, apple-touch-icon, apple-mobile-web-app-capable
 - 세션 쿠키 maxAge 1년 (task kill 후 자동로그인)
 - `manifest.json` SW precache 제외 (`buildExcludes`) — Syntax error 방지
-- 푸시 알림 인프라 (VAPID, push_subscriptions, worker/index.js, Vercel cron) — 토글 오류만 미해결
+- 푸시 알림 전체 구현 완료 (v1.4.2)
+  - VAPID 키 3종 Vercel 환경변수 필수: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`(동일 값), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  - SW 등록: `SWRegister` 컴포넌트가 앱 진입 시 등록만 수행 (권한 요청은 설정 토글 시)
+  - 알림 토글 ON: SW 활성화 대기(statechange 이벤트) → `Notification.requestPermission()` → push 구독 → 서버 저장
+  - 알림 3종: 멤버 러닝 기록, 목표 달성, 어제 기록 없음(Vercel cron 12:00 KST)
 
 ---
 
@@ -78,7 +82,16 @@ CRON_SECRET=
   - web-push VAPID, Vercel cron, push_subscriptions 테이블, worker/index.js
   - 알림 3종: 멤버 러닝 기록, 목표 달성, 어제 기록 없음(12:00 KST)
   - `notify/route.ts` 쿼리 버그 수정: `goal_distance_km`을 group_members 대신 groups에서 참조
-- [x] **알림 토글 재구현** — SW polling 방식으로 교체, 오류 메시지 구체화
+- [x] **iOS PWA 알림 토글 수정** (v1.4.2)
+  - `push-client.ts` 분리: `swReady()`, `subscribePush()`, `savePushSubscription()` 공통 유틸
+  - SW 활성화 대기 방식: polling → `statechange` 이벤트 리스너로 교체 (timeout 60s)
+  - `SWRegister` 컴포넌트: 앱 진입 시 SW 등록만 수행. 자동 권한 요청(`requestPermission`) 제거
+    - 이유: useEffect에서 자동 호출 시 iOS가 예상치 못한 시점에 권한 다이얼로그 표시 → 이후 수동 토글 시 다이얼로그 미표시
+  - TypeScript 빌드 오류 수정: `urlBase64ToUint8Array` 반환 타입 `Uint8Array<ArrayBuffer>`로 명시
+- [x] **VAPID 환경변수 정비**
+  - `VAPID_PUBLIC_KEY` 누락 확인 및 신규 VAPID 키 세트 생성
+  - Vercel에 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`(동일 값), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` 4종 설정 필요
+  - 키 변경 후 사용자/크루원 모두 토글 껐다 켜서 재구독 필요
 
 ---
 
