@@ -70,10 +70,20 @@ export function NotificationSection() {
         setEnabled(true)
         toast.success('알림이 켜졌습니다.')
       } else {
+        let endpoint: string | undefined
+        try {
+          const reg = await swReady(5000)
+          const sub = await reg.pushManager.getSubscription()
+          if (sub) {
+            endpoint = sub.endpoint
+            await sub.unsubscribe()
+          }
+        } catch {}
+
         const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
+          body: JSON.stringify(endpoint ? { endpoint } : {}),
         })
         if (!res.ok) throw new Error('unsubscribe API failed')
 

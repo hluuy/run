@@ -50,7 +50,7 @@ export async function subscribePush(reg: ServiceWorkerRegistration): Promise<Pus
   if (!key) throw new Error('vapid-key-missing')
 
   const existing = await reg.pushManager.getSubscription()
-  if (existing) return existing
+  if (existing) await existing.unsubscribe()
 
   return reg.pushManager.subscribe({
     userVisibleOnly: true,
