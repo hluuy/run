@@ -35,6 +35,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
         )
       } catch (err: unknown) {
         const status = (err as { statusCode?: number }).statusCode
+        console.error('[push] sendNotification failed', { userId, status, endpoint: sub.endpoint.slice(0, 60), err })
         if (status === 410 || status === 404) expired.push(sub.id)
       }
     })
