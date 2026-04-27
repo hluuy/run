@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendPushToUsers, formatPace, koreanSubjectParticle } from '@/lib/push'
+import { sendPushToUsers, formatPace } from '@/lib/push'
 import { getGoalPeriod } from '@/lib/period'
 import { z } from 'zod'
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     if (recipientIds.length > 0) {
       // 러닝 기록 알림
       await sendPushToUsers(recipientIds, {
-        title: `${nickname}${koreanSubjectParticle(nickname)} 달렸어요`,
+        title: `${nickname}님이 달렸어요`,
         body: `${groupNames} · ${distance_km.toFixed(1)}km · ${formatPace(avg_pace_sec_per_km)}/km`,
         url: '/',
       })
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
         if (total >= group.goal_distance_km && prevTotal < group.goal_distance_km) {
           await sendPushToUsers(recipientIds, {
-            title: `${nickname}${koreanSubjectParticle(nickname)} 목표를 달성했어요 🎉`,
+            title: `${nickname}님이 목표를 달성했어요 🎉`,
             body: `${group.name} ${label} ${Math.round(group.goal_distance_km)}km 목표 완료!`,
             url: '/crew',
           })

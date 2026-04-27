@@ -54,12 +54,3 @@ export function formatPace(secPerKm: number): string {
   const s = Math.round(secPerKm % 60)
   return `${m}'${String(s).padStart(2, '0')}"`
 }
-
-// 마지막 글자의 받침 유무로 이/가 반환 (비한글은 이 반환)
-export function koreanSubjectParticle(word: string): string {
-  const code = word.charCodeAt(word.length - 1)
-  if (code >= 0xAC00 && code <= 0xD7A3) {
-    return (code - 0xAC00) % 28 !== 0 ? '이' : '가'
-  }
-  return '이'
-}
