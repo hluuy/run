@@ -6,6 +6,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2026-04-27',
+    features: [
+      '설정 화면에 PWA 설치 안내 추가 (브라우저 접속 시만 표시)',
+      '알림 문구 개선 — 크루명 포함, 목표 달성 시 기간 표시',
+      '목표 달성 알림 버그 수정',
+    ],
+  },
+  {
     version: '1.4.2',
     date: '2026-04-27',
     features: ['iOS PWA 알림 토글 수정'],
