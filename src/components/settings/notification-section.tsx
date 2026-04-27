@@ -26,6 +26,7 @@ async function swReady(timeoutMs = 10000): Promise<ServiceWorkerRegistration> {
 
     if (regs.length === 0) {
       lastState = 'no-reg'
+      try { await navigator.serviceWorker.register('/sw.js', { scope: '/' }) } catch {}
     } else {
       lastState = regs
         .map(r => r.active ? 'active' : r.waiting ? 'waiting' : r.installing ? 'installing' : 'redundant')
