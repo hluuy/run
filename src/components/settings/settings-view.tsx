@@ -75,6 +75,9 @@ export function SettingsView() {
       </div>
 
       <div className="mx-4 space-y-4 pb-8">
+        {/* PWA 설치 안내 (브라우저에서 접속 시만 표시) */}
+        <PwaInstallSection />
+
         {/* 닉네임 */}
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <p className="font-medium text-sm">프로필</p>
@@ -99,9 +102,6 @@ export function SettingsView() {
         <div className="rounded-2xl border border-border bg-card p-4">
           <ApiTokenSection />
         </div>
-
-        {/* PWA 설치 안내 (브라우저에서 접속 시만 표시) */}
-        <PwaInstallSection />
 
         {/* 알림 */}
         <NotificationSection />
