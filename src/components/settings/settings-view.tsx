@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { ApiTokenSection } from './api-token-section'
 import { NotificationSection } from './notification-section'
+import { PwaInstallSection } from './pwa-install-section'
 import { toast } from 'sonner'
 import { Loader2, TriangleAlert, ChevronDown } from 'lucide-react'
 import { CHANGELOG } from '@/lib/changelog'
@@ -98,6 +99,9 @@ export function SettingsView() {
         <div className="rounded-2xl border border-border bg-card p-4">
           <ApiTokenSection />
         </div>
+
+        {/* PWA 설치 안내 (브라우저에서 접속 시만 표시) */}
+        <PwaInstallSection />
 
         {/* 알림 */}
         <NotificationSection />
