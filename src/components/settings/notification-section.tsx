@@ -5,59 +5,9 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  const output = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i)
-  return output
-}
-
-async function swReady(timeoutMs = 60000): Promise<ServiceWorkerRegistration> {
-  // 이미 active 상태인 등록이 있으면 바로 반환
-  let regs = await navigator.serviceWorker.getRegistrations()
-  const already = regs.find(r => r.active)
-  if (already) return already
-
-  // 등록이 없으면 직접 등록
-  if (regs.length === 0) {
-    try {
-      await navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      regs = await navigator.serviceWorker.getRegistrations()
-    } catch {
-      throw new Error('sw-register-failed')
-    }
-  }
-
-  const reg = regs[0]
-  if (!reg) throw new Error('sw-no-reg')
-  if (reg.active) return reg
-
-  // installing/waiting 상태 — statechange 이벤트로 대기 (precaching 완료 대기)
-  const sw = reg.installing ?? reg.waiting
-  if (!sw) throw new Error('sw-redundant')
-
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`sw-timeout:${sw.state}`)),
-      timeoutMs
-    )
-    sw.addEventListener('statechange', () => {
-      if (sw.state === 'activated') {
-        clearTimeout(timer)
-        resolve(reg)
-      } else if (sw.state === 'redundant') {
-        clearTimeout(timer)
-        reject(new Error('sw-redundant'))
-      }
-    })
-  })
-}
+import { swReady, subscribePush, savePushSubscription } from '@/lib/push-client'
 
 export function NotificationSection() {
-  // null = not yet determined (show nothing), false/true = known support state
   const [supported, setSupported] = useState<boolean | null>(null)
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -80,10 +30,7 @@ export function NotificationSection() {
       .then((sub) => {
         setEnabled(!!sub && Notification.permission === 'granted')
       })
-      .catch(() => {
-        // SW not ready or timed out — treat as disabled
-        setEnabled(false)
-      })
+      .catch(() => setEnabled(false))
       .finally(() => setLoading(false))
   }, [])
 
@@ -99,53 +46,24 @@ export function NotificationSection() {
 
         let reg: ServiceWorkerRegistration
         try {
-          reg = await swReady(10000)
+          reg = await swReady()
         } catch (e) {
           const state = e instanceof Error ? e.message : String(e)
           toast.error(`서비스 워커 준비 실패 (${state}). 앱을 다시 열어주세요.`)
           return
         }
 
-        const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        if (!key) {
-          toast.error('VAPID 키 누락 — 환경변수를 확인해주세요.')
+        let sub: PushSubscription
+        try {
+          sub = await subscribePush(reg)
+        } catch (e) {
+          toast.error(`구독 실패: ${e instanceof Error ? e.message : String(e)}`)
           return
         }
 
-        let sub = await reg.pushManager.getSubscription()
-        if (!sub) {
-          try {
-            sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(key),
-            })
-          } catch (e) {
-            toast.error(`구독 실패: ${e instanceof Error ? e.message : String(e)}`)
-            return
-          }
-        }
-
-        const json = sub.toJSON() as {
-          endpoint: string
-          keys?: { p256dh: string; auth: string }
-        }
-        if (!json.keys?.p256dh || !json.keys?.auth) {
-          toast.error('구독 키 누락 — 브라우저가 Web Push를 지원하지 않을 수 있습니다.')
-          return
-        }
-
-        const res = await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpoint: json.endpoint,
-            p256dh: json.keys.p256dh,
-            auth: json.keys.auth,
-          }),
-        })
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}))
-          toast.error(`서버 오류 (${res.status}): ${errBody.error ?? '알 수 없음'}`)
+        const ok = await savePushSubscription(sub)
+        if (!ok) {
+          toast.error('서버 저장 실패. 다시 시도해주세요.')
           return
         }
 
@@ -169,7 +87,6 @@ export function NotificationSection() {
     }
   }
 
-  // Don't render until we know whether push is supported
   if (supported !== true) return null
 
   return (
