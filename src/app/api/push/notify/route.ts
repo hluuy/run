@@ -32,10 +32,7 @@ export async function POST(request: Request) {
     .select('group_id, groups!inner(id, name, goal_type, goal_distance_km)')
     .eq('user_id', user.id)
 
-  if (!myGroups?.length) {
-    console.log('[notify] no groups for user', user.id)
-    return NextResponse.json({ ok: true })
-  }
+  if (!myGroups?.length) return NextResponse.json({ ok: true })
 
   const groupIds = myGroups.map((m) => m.group_id)
 
@@ -47,17 +44,15 @@ export async function POST(request: Request) {
     .neq('user_id', user.id)
 
   const otherUserIds = [...new Set((otherMembers ?? []).map((m) => m.user_id))]
-  console.log('[notify] otherUserIds', otherUserIds)
 
   if (otherUserIds.length > 0) {
     // notifications_enabled 필터
-    const { data: enabledUsers, error: enabledErr } = await admin
+    const { data: enabledUsers } = await admin
       .from('users')
       .select('id')
       .in('id', otherUserIds)
       .eq('notifications_enabled', true)
 
-    console.log('[notify] enabledUsers', enabledUsers, 'error', enabledErr)
     const recipientIds = (enabledUsers ?? []).map((u) => u.id)
 
     if (recipientIds.length > 0) {
