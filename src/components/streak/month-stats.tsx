@@ -7,9 +7,10 @@ interface MonthStatsProps {
   dayMap: Map<string, DayData>
   rolling: RollingAvg | null
   loading: boolean
+  yearMonth?: string
 }
 
-export function MonthStats({ dayMap, loading }: MonthStatsProps) {
+export function MonthStats({ dayMap, loading, yearMonth }: MonthStatsProps) {
   const days = loading ? [] : Array.from(dayMap.values())
   const totalKm = days.reduce((sum, d) => sum + d.totalDistanceKm, 0)
   const runCount = days.reduce((sum, d) => sum + d.runs.length, 0)
@@ -19,9 +20,14 @@ export function MonthStats({ dayMap, loading }: MonthStatsProps) {
       ? days.reduce((sum, d) => sum + d.runs.reduce((s, r) => s + r.avg_pace_sec_per_km, 0), 0) / runCount
       : 0
 
+  const currentYM = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
+  const monthLabel = !yearMonth || yearMonth === currentYM
+    ? '이번 달'
+    : (() => { const [y, m] = yearMonth.split('-'); return `${y}년 ${parseInt(m)}월` })()
+
   const stats = [
     {
-      label: '이번 달 총 거리',
+      label: `${monthLabel} 총 거리`,
       value: loading ? '—' : `${totalKm.toFixed(2)} km`,
       className: 'bg-gradient-to-br from-primary/20 to-primary/5 border-primary/20',
     },

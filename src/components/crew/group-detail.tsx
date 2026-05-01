@@ -107,9 +107,11 @@ function MemberCard({
       isMe ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'
     }`}>
       <div className="flex items-center justify-between">
-        <div
-          className={`flex items-center gap-2.5 ${onViewStreak ? 'cursor-pointer' : ''}`}
+        <button
+          type="button"
+          disabled={!onViewStreak}
           onClick={onViewStreak}
+          className={`flex items-center gap-2.5 text-left ${onViewStreak ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
         >
           <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
             isMe ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'
@@ -117,7 +119,7 @@ function MemberCard({
             {entry.nickname.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className={`font-semibold text-sm leading-none ${onViewStreak ? 'hover:underline underline-offset-2' : ''}`}>
+            <p className="font-semibold text-sm leading-none">
               {entry.nickname}
               {isMe && <span className="ml-1.5 text-[10px] text-primary font-normal">나</span>}
             </p>
@@ -130,7 +132,7 @@ function MemberCard({
               </p>
             )}
           </div>
-        </div>
+        </button>
 
         <div className="flex items-center gap-2">
           {achieved && <CheckCircle2 className="h-4 w-4 text-green-500" />}

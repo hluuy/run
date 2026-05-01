@@ -20,7 +20,7 @@ export function MemberStreakView({ userId, nickname }: { userId: string; nicknam
     <div className="flex flex-col">
       <div className="flex items-center gap-3 px-4 pt-12 pb-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/crew')}
           className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -28,7 +28,7 @@ export function MemberStreakView({ userId, nickname }: { userId: string; nicknam
         <h1 className="text-xl font-bold truncate">{nickname}의 스트릭</h1>
       </div>
 
-      <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} />
+      <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} yearMonth={yearMonth} />
 
       <div className="mx-3 rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-xl">
         <StreakCalendar

@@ -27,7 +27,7 @@ export function StreakView() {
       </div>
 
       {/* 이번 달 통계 */}
-      <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} />
+      <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} yearMonth={yearMonth} />
 
       {/* 캘린더 */}
       <div className="mx-3 rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden shadow-xl">

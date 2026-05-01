@@ -32,6 +32,14 @@ export async function DELETE(request: Request) {
     if (body.data.target_user_id === user.id) {
       return NextResponse.json({ error: 'cannot_kick_self' }, { status: 400 })
     }
+    const { data: targetMember } = await admin
+      .from('group_members')
+      .select('user_id')
+      .eq('group_id', body.data.group_id)
+      .eq('user_id', body.data.target_user_id)
+      .single()
+    if (!targetMember) return NextResponse.json({ error: 'not_member' }, { status: 404 })
+
     const { error } = await admin
       .from('group_members')
       .delete()
