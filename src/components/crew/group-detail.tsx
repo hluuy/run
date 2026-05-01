@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,7 +65,7 @@ function getGoalPeriod(goalType: string): { start: string; end: string; label: s
 const PERIOD_LABEL: Record<string, string> = { daily: '일간', weekly: '주간', monthly: '월간' }
 
 function MemberCard({
-  entry, isMe, groupId, onGoalSaved, prevKm, joinedAt, prevStart,
+  entry, isMe, groupId, onGoalSaved, prevKm, joinedAt, prevStart, onViewStreak,
 }: {
   entry: LeaderboardEntry
   isMe: boolean
@@ -73,6 +74,7 @@ function MemberCard({
   prevKm: number
   joinedAt: string
   prevStart: string
+  onViewStreak?: () => void
 }) {
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState(String(entry.goal_distance_km ?? ''))
@@ -105,14 +107,17 @@ function MemberCard({
       isMe ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'
     }`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+        <div
+          className={`flex items-center gap-2.5 ${onViewStreak ? 'cursor-pointer' : ''}`}
+          onClick={onViewStreak}
+        >
           <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
             isMe ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'
           }`}>
             {entry.nickname.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="font-semibold text-sm leading-none">
+            <p className={`font-semibold text-sm leading-none ${onViewStreak ? 'hover:underline underline-offset-2' : ''}`}>
               {entry.nickname}
               {isMe && <span className="ml-1.5 text-[10px] text-primary font-normal">나</span>}
             </p>
@@ -207,6 +212,7 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   const [deleting, setDeleting] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const router = useRouter()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [editName, setEditName] = useState(group.name)
   const [editGoalType, setEditGoalType] = useState<'daily' | 'weekly' | 'monthly'>(group.goal_type ?? 'weekly')
@@ -523,6 +529,10 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
               prevKm={prevKmMap.get(entry.user_id) ?? 0}
               joinedAt={joinedAtMap.get(entry.user_id) ?? ''}
               prevStart={prevStart}
+              onViewStreak={entry.user_id !== myId
+                ? () => router.push(`/member/${entry.user_id}?nickname=${encodeURIComponent(entry.nickname)}`)
+                : undefined
+              }
             />
           ))}
         </div>

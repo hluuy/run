@@ -23,6 +23,7 @@ interface DayDetailSheetProps {
   open: boolean
   onClose: () => void
   onRunAdded?: () => void
+  readOnly?: boolean
 }
 
 function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -37,10 +38,11 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
-function RunCard({ run, index, total, onEdit, onDeleted }: {
+function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
   run: Run; index: number; total: number
   onEdit: (run: Run) => void
   onDeleted: () => void
+  readOnly?: boolean
 }) {
   const [points, setPoints] = useState<GpxPoint[] | null>(null)
   const [loadingGpx, setLoadingGpx] = useState(false)
@@ -49,7 +51,7 @@ function RunCard({ run, index, total, onEdit, onDeleted }: {
   const supabase = createClient()
 
   useEffect(() => {
-    if (!run.gpx_storage_path) return
+    if (!run.gpx_storage_path || readOnly) return
     setLoadingGpx(true)
     supabase.storage
       .from('gpx-files')
@@ -65,7 +67,7 @@ function RunCard({ run, index, total, onEdit, onDeleted }: {
           setLoadingGpx(false)
         }
       })
-  }, [run.gpx_storage_path])
+  }, [run.gpx_storage_path, readOnly])
 
   async function deleteRun() {
     setDeleting(true)
@@ -83,20 +85,22 @@ function RunCard({ run, index, total, onEdit, onDeleted }: {
           ? <p className="text-xs font-medium text-primary">{index + 1}번째 러닝</p>
           : <span />
         }
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onEdit(run)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Pencil className="h-3 w-3" />수정
-          </button>
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <Trash2 className="h-3 w-3" />삭제
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onEdit(run)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Pencil className="h-3 w-3" />수정
+            </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <Trash2 className="h-3 w-3" />삭제
+            </button>
+          </div>
+        )}
       </div>
 
       {confirmDelete && (
@@ -143,7 +147,7 @@ function RunCard({ run, index, total, onEdit, onDeleted }: {
   )
 }
 
-export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetailSheetProps) {
+export function DayDetailSheet({ dayData, open, onClose, onRunAdded, readOnly }: DayDetailSheetProps) {
   const [editingRun, setEditingRun] = useState<Run | null>(null)
 
   if (!dayData) return null
@@ -186,6 +190,7 @@ export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetail
                 key={run.id} run={run} index={i} total={total}
                 onEdit={setEditingRun}
                 onDeleted={() => { onRunAdded?.(); onClose() }}
+                readOnly={readOnly}
               />
             ))}
           </div>
@@ -193,16 +198,18 @@ export function DayDetailSheet({ dayData, open, onClose, onRunAdded }: DayDetail
       </Dialog>
 
       {/* 수정 모달 */}
-      <Dialog open={!!editingRun} onOpenChange={(o) => !o && setEditingRun(null)}>
-        <DialogContent className="max-w-sm w-full rounded-2xl max-h-[90vh] overflow-y-auto gap-0 p-0">
-          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
-            <DialogTitle className="text-base font-bold">러닝 기록 수정</DialogTitle>
-          </DialogHeader>
-          <div className="px-5 py-4">
-            {editingRun && <RunForm editRun={editingRun} onSuccess={handleEditSuccess} />}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {!readOnly && (
+        <Dialog open={!!editingRun} onOpenChange={(o) => !o && setEditingRun(null)}>
+          <DialogContent className="max-w-sm w-full rounded-2xl max-h-[90vh] overflow-y-auto gap-0 p-0">
+            <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+              <DialogTitle className="text-base font-bold">러닝 기록 수정</DialogTitle>
+            </DialogHeader>
+            <div className="px-5 py-4">
+              {editingRun && <RunForm editRun={editingRun} onSuccess={handleEditSuccess} />}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

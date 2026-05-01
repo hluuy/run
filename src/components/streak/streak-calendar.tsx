@@ -16,9 +16,10 @@ interface StreakCalendarProps {
   loading: boolean
   onMonthChange: (ym: string) => void
   onRunAdded: () => void
+  readOnly?: boolean
 }
 
-export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRunAdded }: StreakCalendarProps) {
+export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRunAdded, readOnly }: StreakCalendarProps) {
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null)
 
   const days = getDaysInMonth(yearMonth)
@@ -114,6 +115,7 @@ export function StreakCalendar({ yearMonth, dayMap, loading, onMonthChange, onRu
         open={!!selectedDay}
         onClose={() => setSelectedDay(null)}
         onRunAdded={onRunAdded}
+        readOnly={readOnly}
       />
     </>
   )

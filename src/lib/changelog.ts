@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.0',
+    date: '2026-05-02',
+    features: [
+      '크루원 스트릭 보기 — 멤버 이름 클릭 시 해당 멤버의 스트릭 캘린더 조회',
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-05-02',
     features: [

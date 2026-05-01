@@ -219,6 +219,14 @@ export interface Database {
         Args: { p_group_id: string; p_start: string; p_end: string }
         Returns: { user_id: string; nickname: string; total_km: number; goal_distance_km: number | null }[]
       }
+      get_member_month_runs: {
+        Args: { p_target_user_id: string; p_start: string; p_end: string }
+        Returns: Database['public']['Tables']['runs']['Row'][]
+      }
+      get_member_rolling_avg: {
+        Args: { p_target_user_id: string }
+        Returns: { avg_distance_km: number; avg_pace_sec_per_km: number }[]
+      }
     }
     Enums: Record<never, never>
     CompositeTypes: Record<never, never>
