@@ -4,7 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const schema = z.object({
-  goal_type: z.enum(['daily', 'weekly', 'monthly']),
+  name: z.string().min(1).max(30).optional(),
+  goal_type: z.enum(['daily', 'weekly', 'monthly']).optional(),
+}).refine(d => d.name !== undefined || d.goal_type !== undefined, {
+  message: 'at_least_one_field_required',
 })
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

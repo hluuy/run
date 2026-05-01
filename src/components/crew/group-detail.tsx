@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2, LogOut } from 'lucide-react'
+import { Share2, Loader2, Target, Flame, CheckCircle2, Trash2, LogOut, Settings, UserMinus } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import type { Group, LeaderboardEntry } from '@/types'
 
 function getPreviousPeriod(goalType: string): { start: string; end: string } {
@@ -206,6 +207,12 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   const [deleting, setDeleting] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [editName, setEditName] = useState(group.name)
+  const [editGoalType, setEditGoalType] = useState<'daily' | 'weekly' | 'monthly'>(group.goal_type ?? 'weekly')
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [kickingId, setKickingId] = useState<string | null>(null)
+  const [confirmKickId, setConfirmKickId] = useState<string | null>(null)
   const supabase = createClient()
 
   async function load() {
@@ -281,6 +288,53 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
     onUpdated()
   }
 
+  function openSettings() {
+    setEditName(group.name)
+    setEditGoalType(group.goal_type ?? 'weekly')
+    setConfirmKickId(null)
+    setSettingsOpen(true)
+  }
+
+  async function saveSettings() {
+    if (!editName.trim()) return
+    setSavingSettings(true)
+    const updates: Record<string, string> = {}
+    if (editName.trim() !== group.name) updates.name = editName.trim()
+    if (editGoalType !== group.goal_type) updates.goal_type = editGoalType
+
+    if (Object.keys(updates).length === 0) {
+      setSavingSettings(false)
+      setSettingsOpen(false)
+      return
+    }
+
+    const res = await fetch(`/api/groups/${group.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    setSavingSettings(false)
+    if (!res.ok) { toast.error('저장 실패'); return }
+    toast.success('크루 설정이 저장됐습니다.')
+    setSettingsOpen(false)
+    onUpdated()
+  }
+
+  async function kickMember(targetId: string) {
+    setKickingId(targetId)
+    const res = await fetch('/api/group-members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: group.id, target_user_id: targetId }),
+    })
+    setKickingId(null)
+    setConfirmKickId(null)
+    if (!res.ok) { toast.error('강퇴 실패'); return }
+    const member = leaderboard.find(e => e.user_id === targetId)
+    toast.success(`${member?.nickname ?? '멤버'}를 강퇴했습니다.`)
+    load()
+  }
+
   async function deleteGroup() {
     setDeleting(true)
     const res = await fetch(`/api/groups/${group.id}`, { method: 'DELETE' })
@@ -310,13 +364,22 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
             초대
           </Button>
           {isCreator && (
-            <Button
-              size="sm" variant="ghost"
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <>
+              <Button
+                size="sm" variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                onClick={openSettings}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm" variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </>
           )}
           {!isCreator && myId && (
             <Button
@@ -361,6 +424,85 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
           </div>
         </div>
       )}
+
+      {/* 크루 설정 다이얼로그 */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>크루 설정</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 mt-2">
+            <div className="space-y-1.5">
+              <Label>크루 이름</Label>
+              <Input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                maxLength={30}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>목표 기간</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['daily', 'weekly', 'monthly'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setEditGoalType(v)}
+                    className={`rounded-xl border p-3 text-center transition-colors ${
+                      editGoalType === v
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-card hover:bg-muted'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{PERIOD_LABEL[v]}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={saveSettings}
+              disabled={savingSettings || !editName.trim()}
+            >
+              {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '저장'}
+            </Button>
+
+            {leaderboard.filter(e => e.user_id !== myId).length > 0 && (
+              <div className="border-t pt-4 space-y-2">
+                <p className="text-sm font-medium">멤버 관리</p>
+                {leaderboard
+                  .filter(e => e.user_id !== myId)
+                  .map(entry => (
+                    <div key={entry.user_id} className="flex items-center justify-between py-0.5">
+                      <span className="text-sm">{entry.nickname}</span>
+                      {confirmKickId === entry.user_id ? (
+                        <div className="flex gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2"
+                            onClick={() => setConfirmKickId(null)}>
+                            취소
+                          </Button>
+                          <Button size="sm" variant="destructive" className="h-7 text-xs px-2"
+                            onClick={() => kickMember(entry.user_id)}
+                            disabled={kickingId === entry.user_id}>
+                            {kickingId === entry.user_id
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : '강퇴'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost"
+                          className="h-7 text-xs text-muted-foreground hover:text-destructive px-2"
+                          onClick={() => setConfirmKickId(entry.user_id)}>
+                          <UserMinus className="h-3 w-3 mr-1" />강퇴
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 멤버 카드 */}
       {loading ? (
