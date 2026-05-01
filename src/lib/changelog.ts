@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    date: '2026-05-02',
+    features: [
+      '크루 설정 — 이름·목표 기간 변경 (생성자 전용)',
+      '크루 멤버 강퇴 기능 (생성자 전용)',
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-04-27',
     features: [
