@@ -1,10 +1,10 @@
-# 작업 현황 (2026-04-27 업데이트)
+# 작업 현황 (2026-05-02 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
 - **GitHub:** https://github.com/hluuy/run
 - **스택:** Next.js 15, Supabase, Vercel, Tailwind CSS 4, shadcn/ui
-- **현재 버전:** 1.5.1
+- **현재 버전:** 1.7.0
 
 ## 로컬 실행
 
@@ -68,6 +68,23 @@ CRON_SECRET=
   - SW 등록: `SWRegister` 컴포넌트가 앱 진입 시 등록만 수행 (권한 요청은 설정 토글 시)
   - 알림 토글 ON: SW 활성화 대기(statechange 이벤트) → `Notification.requestPermission()` → push 구독 → 서버 저장
   - 알림 3종: 멤버 러닝 기록, 목표 달성, 어제 기록 없음(Vercel cron 12:00 KST)
+
+---
+
+## 2026-05-02 작업 완료
+
+### v1.7.0 (기능)
+- [x] **크루원 스트릭 보기** — 크루 페이지에서 멤버 이름 클릭 시 해당 멤버의 스트릭 캘린더 조회
+  - Supabase RPC 2종 추가: `get_member_month_runs`, `get_member_rolling_avg` (SECURITY DEFINER, 같은 그룹 멤버만 조회 가능)
+  - `/member/[userId]` 페이지 신규, `MemberStreakView` 컴포넌트 신규
+  - `DayDetailSheet` / `RunCard` / `StreakCalendar`: `readOnly` prop 추가 (수정·삭제·GPX 숨김)
+  - GPX 지도는 Storage RLS 상 타인 파일 접근 불가로 미표시
+
+### v1.6.0 (기능)
+- [x] **크루 설정 다이얼로그** — 생성자 전용 ⚙️ 버튼, 이름·목표 기간 변경 가능
+  - `PATCH /api/groups/[id]`: `name` 필드 추가
+- [x] **크루 멤버 강퇴** — 생성자가 설정 다이얼로그에서 멤버 강퇴 (확인 단계 포함)
+  - `DELETE /api/group-members`: `target_user_id` 옵션 추가
 
 ---
 
