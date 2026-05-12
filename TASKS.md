@@ -1,4 +1,4 @@
-# 작업 현황 (2026-05-02 업데이트)
+# 작업 현황 (2026-05-12 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
@@ -145,6 +145,50 @@ CRON_SECRET=
 
 ---
 
+## 다음 작업 — Strava API 연동 (v1.8.0)
+
+> **선결 조건:** 오늘 실제 GPS 런 후 Strava API 응답 확인 필요
+> 현재 테스트 데이터는 `"manual": true`라 polyline·GPS·심박수 등이 비어 있음
+
+### 확인 방법 (Postman)
+1. 액세스 토큰 갱신 → `GET /api/v3/athlete/activities?per_page=1`
+2. 응답에서 아래 필드 실제 값 확인:
+   - `map.summary_polyline` — 채워져 오는지
+   - `total_elevation_gain` — 고도 데이터 여부
+   - `has_heartrate`, `average_heartrate` — 심박수
+   - `trainer` — 트레드밀 여부 (false이어야 정상)
+
+### DB 스키마 추가 (Supabase Migration)
+- [ ] `runs.is_treadmill boolean DEFAULT false` — `trainer` 필드 매핑
+- [ ] `runs.polyline text` — `map.summary_polyline` 매핑 (GPS 응답 확인 후 진행)
+- [ ] `runs.elevation_gain_m float8` — `total_elevation_gain` (선택)
+
+### API 업데이트
+- [ ] `/api/runs/sync` — `is_treadmill`, `polyline`, `elevation_gain_m` 필드 수용
+  - Zod 스키마에 선택 필드로 추가
+  - DB insert에 포함
+
+### 단축어 업데이트
+현재 단축어 흐름:
+```
+① Strava 토큰 갱신 (refresh_token → access_token)
+② GET /api/v3/athlete/activities?per_page=1
+③ 각 필드 추출 (distance, moving_time, average_heartrate, start_date_local)
+④ POST /api/runs/sync
+```
+
+추가할 단계:
+- [ ] `trainer` 필드 추출 → `is_treadmill`로 전송
+- [ ] `map.summary_polyline` 추출 → `polyline`으로 전송 (GPS 응답 확인 후)
+- [ ] `total_elevation_gain` 추출 → `elevation_gain_m`으로 전송 (선택)
+
+### UI 업데이트
+- [ ] 트레드밀 런 감지 시 지도 대신 "트레드밀 러닝" 뱃지 표시
+- [ ] `polyline` 있으면 Leaflet으로 경로 렌더링 (`@mapbox/polyline` 디코딩)
+  - 기존 GPX 업로드 경로와 공존: GPX 있으면 GPX 우선, 없으면 polyline
+
+---
+
 ## 미결 이슈
 
 - [ ] **listUsers 전체 스캔 개선** — Supabase admin JS 타입에 `generateLink.shouldCreateUser` 미지원으로 유지 중. rate limiting(1분 5회)으로 열거 공격 실용성 완화. 향후 SDK 업데이트 시 재검토
@@ -173,8 +217,9 @@ CRON_SECRET=
 
 ## 알려진 한계
 
-- **iOS 26 Shortcuts:** HealthKit 접근 차단 — 운동 데이터 자동 수집 불가
-  - Nike Run Club / Strava 모바일 앱 모두 Shortcuts 액션 없음
-  - 근본 해결: 네이티브 iOS 앱 필요 (Apple Developer Program $99/년)
+- **iOS 26 Shortcuts + HealthKit:** 직접 접근 차단
+  - 대안: **Strava API 연동**으로 해결 진행 중 (v1.6.0)
+  - 단축어에서 Strava OAuth 토큰 갱신 → 최근 활동 조회 → `/api/runs/sync` POST 흐름 구축 완료 (테스트 단계)
+  - 근본 해결: 네이티브 iOS 앱 (Apple Developer Program $99/년) — 현재 보류
 - **API 토큰:** 다른 기기에서는 토큰 원문 표시 안 됨 (localStorage는 기기별)
 - **Supabase Refresh Token Duration:** 기본 7일, 늘리려면 Pro 플랜 필요
