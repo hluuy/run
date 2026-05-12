@@ -63,6 +63,9 @@ export interface Database {
           avg_pace_sec_per_km: number
           avg_heart_rate_bpm: number | null
           gpx_storage_path: string | null
+          is_treadmill: boolean
+          polyline: string | null
+          elevation_gain_m: number | null
           source: 'manual' | 'shortcut' | 'gpx'
           created_at: string
         }
@@ -77,6 +80,9 @@ export interface Database {
           avg_pace_sec_per_km: number
           avg_heart_rate_bpm?: number | null
           gpx_storage_path?: string | null
+          is_treadmill?: boolean
+          polyline?: string | null
+          elevation_gain_m?: number | null
           source?: 'manual' | 'shortcut' | 'gpx'
           created_at?: string
         }
@@ -91,6 +97,9 @@ export interface Database {
           avg_pace_sec_per_km?: number
           avg_heart_rate_bpm?: number | null
           gpx_storage_path?: string | null
+          is_treadmill?: boolean
+          polyline?: string | null
+          elevation_gain_m?: number | null
           source?: 'manual' | 'shortcut' | 'gpx'
           created_at?: string
         }

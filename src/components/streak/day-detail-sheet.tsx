@@ -10,7 +10,7 @@ import { parseGpxFile, type GpxPoint } from '@/lib/gpx'
 import { createClient } from '@/lib/supabase/client'
 import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
-import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 const RouteMap = dynamic(() => import('./route-map').then((m) => m.RouteMap), {
@@ -69,6 +69,8 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
       })
   }, [run.gpx_storage_path, readOnly])
 
+  const hasMap = !!run.gpx_storage_path || !!run.polyline
+
   async function deleteRun() {
     setDeleting(true)
     const res = await fetch(`/api/runs/${run.id}`, { method: 'DELETE' })
@@ -117,14 +119,22 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
         </div>
       )}
 
-      {run.gpx_storage_path && (
+      {run.is_treadmill && (
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-muted border border-border/60 px-2.5 py-1 text-xs text-muted-foreground">
+          🏃 트레드밀 러닝
+        </div>
+      )}
+
+      {hasMap && !run.is_treadmill && (
         <div className="mb-3 overflow-hidden rounded-xl">
-          {loadingGpx ? (
+          {run.gpx_storage_path && loadingGpx ? (
             <div className="flex h-48 items-center justify-center rounded-xl bg-muted">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : points && points.length > 0 ? (
+          ) : run.gpx_storage_path && points && points.length > 0 ? (
             <RouteMap points={points} />
+          ) : run.polyline ? (
+            <RouteMap encodedPolyline={run.polyline} />
           ) : (
             <p className="text-xs text-muted-foreground py-2">경로를 불러올 수 없습니다.</p>
           )}
@@ -138,9 +148,12 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
         {run.avg_heart_rate_bpm && (
           <StatRow icon={<Heart className="h-4 w-4 text-red-400" />} label="평균 심박수" value={`${Math.round(run.avg_heart_rate_bpm)} bpm`} />
         )}
+        {run.elevation_gain_m != null && (
+          <StatRow icon={<TrendingUp className="h-4 w-4" />} label="누적 고도" value={`${Math.round(run.elevation_gain_m)} m`} />
+        )}
       </div>
 
-      {!run.gpx_storage_path && (
+      {!hasMap && !run.is_treadmill && (
         <p className="text-xs text-muted-foreground px-1 pt-1">GPS 경로 없음</p>
       )}
     </div>

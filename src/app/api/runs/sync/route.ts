@@ -13,6 +13,9 @@ const syncSchema = z.object({
   duration_sec: z.number().int().positive(),
   avg_heart_rate_bpm: z.number().int().min(40).max(250).optional().nullable(),
   local_date_key: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  is_treadmill: z.boolean().optional(),
+  polyline: z.string().optional().nullable(),
+  elevation_gain_m: z.number().min(0).optional().nullable(),
 })
 
 // "2026. 4. 21. 오후 7:57" → "2026-04-21T19:57:00+09:00"
@@ -57,6 +60,11 @@ function normalizeBody(raw: Record<string, unknown>): Record<string, unknown> {
     result.duration_sec = s.includes(':') ? parseDuration(s) : parseInt(s)
   }
 
+  // 빈 값(0, 빈 문자열, undefined)은 null 처리
+  if (!result.avg_heart_rate_bpm) {
+    result.avg_heart_rate_bpm = null
+  }
+
   return result
 }
 
@@ -91,7 +99,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_payload', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm } = parsed.data
+  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm, is_treadmill, polyline, elevation_gain_m } = parsed.data
   const avg_pace_sec_per_km = duration_sec / distance_km
 
   const local_date_key = parsed.data.local_date_key
@@ -109,6 +117,9 @@ export async function POST(request: Request) {
       duration_sec,
       avg_pace_sec_per_km,
       avg_heart_rate_bpm: avg_heart_rate_bpm ?? null,
+      is_treadmill: is_treadmill ?? false,
+      polyline: polyline ?? null,
+      elevation_gain_m: elevation_gain_m ?? null,
       source: 'shortcut',
     })
     .select('id')
