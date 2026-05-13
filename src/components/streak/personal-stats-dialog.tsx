@@ -83,7 +83,7 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
 
           {/* 월별 거리 차트 */}
           <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-3">월별 거리 (최근 6개월)</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-3">월별 거리 (최근 6개월, km)</p>
             <div style={{ pointerEvents: 'none' }}>
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={stats?.monthlyTotals ?? []} barSize={28} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
@@ -93,7 +93,7 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
                     <LabelList
                       dataKey="totalKm"
                       position="top"
-                      formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}km` : ''}
+                      formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}` : ''}
                       style={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
                     />
                     {(stats?.monthlyTotals ?? []).map((entry) => (
