@@ -9,6 +9,7 @@ import { Zap, MapPin, Flame, Trophy } from 'lucide-react'
 interface PersonalStatsDialogProps {
   open: boolean
   onClose: () => void
+  openCount: number
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -23,8 +24,8 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   )
 }
 
-export function PersonalStatsDialog({ open, onClose }: PersonalStatsDialogProps) {
-  const { stats, loading } = usePersonalStats()
+export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsDialogProps) {
+  const { stats, loading } = usePersonalStats(open, openCount)
 
   const nowYM = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
 
@@ -95,7 +96,7 @@ export function PersonalStatsDialog({ open, onClose }: PersonalStatsDialogProps)
                   {(stats?.monthlyTotals ?? []).map((entry) => (
                     <Cell
                       key={entry.yearMonth}
-                      fill={entry.yearMonth === nowYM ? 'var(--color-primary)' : 'var(--color-muted-foreground)'}
+                      fill={entry.yearMonth === nowYM ? 'oklch(0.72 0.18 45)' : 'oklch(0.55 0 0)'}
                       opacity={entry.yearMonth === nowYM ? 1 : 0.35}
                     />
                   ))}

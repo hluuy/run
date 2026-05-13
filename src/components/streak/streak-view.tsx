@@ -15,6 +15,7 @@ function currentYearMonth() {
 export function StreakView() {
   const [yearMonth, setYearMonth] = useState(currentYearMonth)
   const [statsOpen, setStatsOpen] = useState(false)
+  const [statsOpenCount, setStatsOpenCount] = useState(0)
   const { dayMap, rolling, loading, refetch } = useMonthRuns(yearMonth)
 
   return (
@@ -25,7 +26,7 @@ export function StreakView() {
           <h1 className="text-xl font-bold">내 스트릭</h1>
           <Flame className="h-5 w-5 text-primary animate-pulse" />
           <button
-            onClick={() => setStatsOpen(true)}
+            onClick={() => { setStatsOpen(true); setStatsOpenCount((c) => c + 1) }}
             className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <BarChart2 className="h-4 w-4" />
@@ -34,7 +35,7 @@ export function StreakView() {
         <AddRunSheet onSuccess={refetch} />
       </div>
 
-      <PersonalStatsDialog open={statsOpen} onClose={() => setStatsOpen(false)} />
+      <PersonalStatsDialog open={statsOpen} onClose={() => setStatsOpen(false)} openCount={statsOpenCount} />
 
       {/* 이번 달 통계 */}
       <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} yearMonth={yearMonth} />

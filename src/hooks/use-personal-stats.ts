@@ -50,7 +50,7 @@ function calcStreaks(dateKeys: string[]): { current: number; longest: number } {
   return { current, longest }
 }
 
-export function usePersonalStats() {
+export function usePersonalStats(enabled: boolean, openCount: number) {
   const supabase = createClient()
 
   const { data: user } = useSWR('auth-user', async () => {
@@ -59,7 +59,7 @@ export function usePersonalStats() {
   })
 
   const { data, isLoading } = useSWR(
-    user ? ['personal-stats', user.id] : null,
+    user && enabled ? ['personal-stats', user.id, openCount] : null,
     async (): Promise<PersonalStats> => {
       const { data: runs } = await supabase
         .from('runs')
