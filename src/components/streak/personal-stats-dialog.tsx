@@ -93,7 +93,7 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
                     <LabelList
                       dataKey="totalKm"
                       position="top"
-                      formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}` : ''}
+                      formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}km` : ''}
                       style={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
                     />
                     {(stats?.monthlyTotals ?? []).map((entry) => (

@@ -46,7 +46,7 @@ export function MonthStats({ dayMap, loading, yearMonth }: MonthStatsProps) {
   return (
     <div className="mx-3 mb-3 grid grid-cols-3 gap-2">
       {stats.map(({ label, value, className }) => (
-        <div key={label} className={`rounded-2xl border px-3 py-3 ${className}`}>
+        <div key={label} className={`rounded-2xl border px-3 py-3 flex flex-col items-center text-center ${className}`}>
           <p className="text-[11px] text-muted-foreground leading-tight mb-1">{label}</p>
           <p className="text-sm font-bold tabular-nums">{value}</p>
         </div>
