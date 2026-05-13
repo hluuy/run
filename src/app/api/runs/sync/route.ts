@@ -11,7 +11,7 @@ const syncSchema = z.object({
   date: z.string().datetime({ offset: true }),
   distance_km: z.number().positive().max(300),
   duration_sec: z.number().int().positive(),
-  avg_heart_rate_bpm: z.number().int().min(40).max(250).optional().nullable(),
+  avg_heart_rate_bpm: z.number().min(40).max(250).optional().nullable(),
   local_date_key: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   is_treadmill: z.boolean().optional(),
   polyline: z.string().optional().nullable(),
