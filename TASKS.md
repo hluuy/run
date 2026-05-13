@@ -1,10 +1,10 @@
-# 작업 현황 (2026-05-12 업데이트)
+# 작업 현황 (2026-05-13 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
 - **GitHub:** https://github.com/hluuy/run
 - **스택:** Next.js 15, Supabase, Vercel, Tailwind CSS 4, shadcn/ui
-- **현재 버전:** 1.7.0
+- **현재 버전:** 1.8.0
 
 ## 로컬 실행
 
@@ -145,47 +145,29 @@ CRON_SECRET=
 
 ---
 
-## 다음 작업 — Strava API 연동 (v1.8.0)
+## 2026-05-13 작업 완료
 
-> **선결 조건:** 오늘 실제 GPS 런 후 Strava API 응답 확인 필요
-> 현재 테스트 데이터는 `"manual": true`라 polyline·GPS·심박수 등이 비어 있음
+### v1.8.0 (기능)
+- [x] **Strava 경로 지도 자동 표시** — `map.summary_polyline` 디코딩 후 Leaflet 렌더링 (`@mapbox/polyline`)
+  - GPX 있으면 GPX 우선, 없으면 polyline 사용
+- [x] **트레드밀 러닝 감지** — `trainer` 필드 → `is_treadmill` 저장, 지도 대신 뱃지 표시
+- [x] **누적 고도 표시** — `total_elevation_gain` → `elevation_gain_m` 저장 및 스탯 카드 표시
+- [x] **km별 splits 표시** — `GET /api/v3/activities/{id}`의 `splits_metric` 저장 및 구간 페이스·심박수 테이블 표시
+- [x] **단축어 흐름 확정**
+  - `GET /athlete/activities?per_page=1` → activity id 추출
+  - `GET /activities/{id}` → splits_metric 추출
+  - `POST /api/runs/sync` — 신규 필드 포함
 
-### 확인 방법 (Postman)
-1. 액세스 토큰 갱신 → `GET /api/v3/athlete/activities?per_page=1`
-2. 응답에서 아래 필드 실제 값 확인:
-   - `map.summary_polyline` — 채워져 오는지
-   - `total_elevation_gain` — 고도 데이터 여부
-   - `has_heartrate`, `average_heartrate` — 심박수
-   - `trainer` — 트레드밀 여부 (false이어야 정상)
-
-### DB 스키마 추가 (Supabase Migration)
-- [ ] `runs.is_treadmill boolean DEFAULT false` — `trainer` 필드 매핑
-- [ ] `runs.polyline text` — `map.summary_polyline` 매핑 (GPS 응답 확인 후 진행)
-- [ ] `runs.elevation_gain_m float8` — `total_elevation_gain` (선택)
-
-### API 업데이트
-- [ ] `/api/runs/sync` — `is_treadmill`, `polyline`, `elevation_gain_m` 필드 수용
-  - Zod 스키마에 선택 필드로 추가
-  - DB insert에 포함
-
-### 단축어 업데이트
-현재 단축어 흐름:
+### 단축어 최종 흐름 (v1.8.0 기준)
 ```
 ① Strava 토큰 갱신 (refresh_token → access_token)
-② GET /api/v3/athlete/activities?per_page=1
-③ 각 필드 추출 (distance, moving_time, average_heartrate, start_date_local)
-④ POST /api/runs/sync
+② GET /api/v3/athlete/activities?per_page=1 → LatestActivity
+③ GET /api/v3/activities/{id} → DetailedActivity
+④ 필드 추출: distance(/1000→km), moving_time, average_heartrate,
+             start_date_local(Z→+09:00), trainer, map.summary_polyline,
+             total_elevation_gain, splits_metric
+⑤ POST /api/runs/sync
 ```
-
-추가할 단계:
-- [ ] `trainer` 필드 추출 → `is_treadmill`로 전송
-- [ ] `map.summary_polyline` 추출 → `polyline`으로 전송 (GPS 응답 확인 후)
-- [ ] `total_elevation_gain` 추출 → `elevation_gain_m`으로 전송 (선택)
-
-### UI 업데이트
-- [ ] 트레드밀 런 감지 시 지도 대신 "트레드밀 러닝" 뱃지 표시
-- [ ] `polyline` 있으면 Leaflet으로 경로 렌더링 (`@mapbox/polyline` 디코딩)
-  - 기존 GPX 업로드 경로와 공존: GPX 있으면 GPX 우선, 없으면 polyline
 
 ---
 
