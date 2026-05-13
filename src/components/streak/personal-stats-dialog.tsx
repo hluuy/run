@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BarChart, Bar, XAxis, YAxis, LabelList, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
 import { formatPace } from '@/lib/streak'
 import { usePersonalStats } from '@/hooks/use-personal-stats'
 import { Zap, MapPin, Flame, Trophy } from 'lucide-react'
@@ -24,10 +24,21 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   )
 }
 
+function calcYTicks(maxVal: number): number[] {
+  if (maxVal === 0) return [0]
+  const step = maxVal <= 10 ? 2 : maxVal <= 30 ? 5 : maxVal <= 60 ? 10 : maxVal <= 120 ? 20 : 50
+  const ceiling = Math.ceil(maxVal / step) * step
+  const ticks: number[] = []
+  for (let i = 0; i <= ceiling; i += step) ticks.push(i)
+  return ticks
+}
+
 export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsDialogProps) {
   const { stats, loading } = usePersonalStats(open, openCount)
 
   const nowYM = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
+  const maxKm = Math.max(...(stats?.monthlyTotals ?? []).map((m) => m.totalKm), 0)
+  const yTicks = calcYTicks(maxKm)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -84,32 +95,30 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
           {/* 월별 거리 차트 */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-3">월별 거리 (최근 6개월)</p>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={stats?.monthlyTotals ?? []} barSize={28} margin={{ top: 16, right: 0, left: 0, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis hide />
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
-                <Bar
-                  dataKey="totalKm"
-                  radius={[4, 4, 0, 0]}
-                  activeBar={{ fillOpacity: 0.75 }}
-                >
-                  <LabelList
-                    dataKey="totalKm"
-                    position="top"
-                    formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}` : ''}
-                    style={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
+            <div style={{ pointerEvents: 'none' }}>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={stats?.monthlyTotals ?? []} barSize={28} margin={{ top: 8, right: 0, left: -8, bottom: 0 }}>
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    ticks={yTicks}
+                    tickFormatter={(v) => `${v}`}
+                    tick={{ fontSize: 9, opacity: 0.45 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={24}
                   />
-                  {(stats?.monthlyTotals ?? []).map((entry) => (
-                    <Cell
-                      key={entry.yearMonth}
-                      fill={entry.yearMonth === nowYM ? 'oklch(0.72 0.18 45)' : 'oklch(0.55 0 0)'}
-                      opacity={entry.yearMonth === nowYM ? 1 : 0.35}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
+                  <Bar dataKey="totalKm" radius={[4, 4, 0, 0]}>
+                    {(stats?.monthlyTotals ?? []).map((entry) => (
+                      <Cell
+                        key={entry.yearMonth}
+                        fill={entry.yearMonth === nowYM ? 'oklch(0.72 0.18 45)' : 'oklch(0.42 0 0)'}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </DialogContent>
