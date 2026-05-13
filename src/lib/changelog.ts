@@ -6,6 +6,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.8.0',
+    date: '2026-05-13',
+    features: [
+      'Strava 연동 — 경로 지도 자동 표시 (polyline)',
+      'km별 페이스·심박수 구간 기록 표시 (splits)',
+      '트레드밀 러닝 자동 감지 및 뱃지 표시',
+      '누적 고도 표시',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-05-02',
     features: [
