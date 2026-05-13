@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BarChart, Bar, XAxis, YAxis, LabelList, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, LabelList, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
 import { formatPace } from '@/lib/streak'
 import { usePersonalStats } from '@/hooks/use-personal-stats'
 import { Zap, MapPin, Flame, Trophy } from 'lucide-react'
@@ -27,23 +26,8 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 
 export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsDialogProps) {
   const { stats, loading } = usePersonalStats(open, openCount)
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const nowYM = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
-
-  function barFill(yearMonth: string, index: number) {
-    const isCurrent = yearMonth === nowYM
-    const isActive = activeIndex === index
-    if (isCurrent) return isActive ? 'oklch(0.62 0.21 25)' : 'oklch(0.72 0.18 45)'
-    return isActive ? 'oklch(0.50 0 0)' : 'oklch(0.55 0 0)'
-  }
-
-  function barOpacity(yearMonth: string, index: number) {
-    const isCurrent = yearMonth === nowYM
-    const isActive = activeIndex === index
-    if (isCurrent) return 1
-    return isActive ? 0.6 : 0.35
-  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -104,11 +88,11 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
               <BarChart data={stats?.monthlyTotals ?? []} barSize={28} margin={{ top: 16, right: 0, left: 0, bottom: 0 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis hide />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
                 <Bar
                   dataKey="totalKm"
                   radius={[4, 4, 0, 0]}
-                  onMouseEnter={(_, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
+                  activeBar={{ fillOpacity: 0.75 }}
                 >
                   <LabelList
                     dataKey="totalKm"
@@ -116,11 +100,11 @@ export function PersonalStatsDialog({ open, onClose, openCount }: PersonalStatsD
                     formatter={(v) => Number(v) > 0 ? `${Number(v).toFixed(0)}` : ''}
                     style={{ fontSize: 10, fill: 'currentColor', opacity: 0.6 }}
                   />
-                  {(stats?.monthlyTotals ?? []).map((entry, index) => (
+                  {(stats?.monthlyTotals ?? []).map((entry) => (
                     <Cell
                       key={entry.yearMonth}
-                      fill={barFill(entry.yearMonth, index)}
-                      opacity={barOpacity(entry.yearMonth, index)}
+                      fill={entry.yearMonth === nowYM ? 'oklch(0.72 0.18 45)' : 'oklch(0.55 0 0)'}
+                      opacity={entry.yearMonth === nowYM ? 1 : 0.35}
                     />
                   ))}
                 </Bar>
