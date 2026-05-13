@@ -16,6 +16,13 @@ const syncSchema = z.object({
   is_treadmill: z.boolean().optional(),
   polyline: z.string().optional().nullable(),
   elevation_gain_m: z.number().min(0).optional().nullable(),
+  splits: z.array(z.object({
+    split: z.number(),
+    distance: z.number(),
+    moving_time: z.number(),
+    average_heartrate: z.number().optional().nullable(),
+    elevation_difference: z.number().optional().nullable(),
+  })).optional().nullable(),
 })
 
 // "2026. 4. 21. 오후 7:57" → "2026-04-21T19:57:00+09:00"
@@ -99,7 +106,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_payload', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm, is_treadmill, polyline, elevation_gain_m } = parsed.data
+  const { workout_source_id, date, distance_km, duration_sec, avg_heart_rate_bpm, is_treadmill, polyline, elevation_gain_m, splits } = parsed.data
   const avg_pace_sec_per_km = duration_sec / distance_km
 
   const local_date_key = parsed.data.local_date_key
@@ -120,6 +127,7 @@ export async function POST(request: Request) {
       is_treadmill: is_treadmill ?? false,
       polyline: polyline ?? null,
       elevation_gain_m: elevation_gain_m ?? null,
+      splits: splits ?? null,
       source: 'shortcut',
     })
     .select('id')

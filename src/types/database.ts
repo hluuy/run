@@ -1,5 +1,13 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
+export interface Split {
+  split: number
+  distance: number
+  moving_time: number
+  average_heartrate?: number | null
+  elevation_difference?: number | null
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -66,6 +74,7 @@ export interface Database {
           is_treadmill: boolean
           polyline: string | null
           elevation_gain_m: number | null
+          splits: Split[] | null
           source: 'manual' | 'shortcut' | 'gpx'
           created_at: string
         }
@@ -83,6 +92,7 @@ export interface Database {
           is_treadmill?: boolean
           polyline?: string | null
           elevation_gain_m?: number | null
+          splits?: Split[] | null
           source?: 'manual' | 'shortcut' | 'gpx'
           created_at?: string
         }
@@ -100,6 +110,7 @@ export interface Database {
           is_treadmill?: boolean
           polyline?: string | null
           elevation_gain_m?: number | null
+          splits?: Split[] | null
           source?: 'manual' | 'shortcut' | 'gpx'
           created_at?: string
         }

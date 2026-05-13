@@ -10,6 +10,7 @@ import { parseGpxFile, type GpxPoint } from '@/lib/gpx'
 import { createClient } from '@/lib/supabase/client'
 import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
+import type { Split } from '@/types/database'
 import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -155,6 +156,31 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
 
       {!hasMap && !run.is_treadmill && (
         <p className="text-xs text-muted-foreground px-1 pt-1">GPS 경로 없음</p>
+      )}
+
+      {run.splits && run.splits.length > 0 && (
+        <div className="rounded-2xl bg-muted/50 border border-border/50 overflow-hidden">
+          <div className="grid grid-cols-3 px-4 py-2 border-b border-border/50">
+            <span className="text-xs font-medium text-muted-foreground">구간</span>
+            <span className="text-xs font-medium text-muted-foreground text-center">페이스</span>
+            <span className="text-xs font-medium text-muted-foreground text-right">심박수</span>
+          </div>
+          {(run.splits as Split[]).map((s) => {
+            const paceSecPerKm = s.moving_time / (s.distance / 1000)
+            const isPartial = s.distance < 950
+            return (
+              <div key={s.split} className="grid grid-cols-3 px-4 py-2.5 border-b border-border/30 last:border-0">
+                <span className="text-sm font-medium">
+                  {isPartial ? `${(s.distance / 1000).toFixed(2)}km` : `${s.split}km`}
+                </span>
+                <span className="text-sm tabular-nums text-center">{formatPace(paceSecPerKm)}</span>
+                <span className="text-sm tabular-nums text-right">
+                  {s.average_heartrate ? `${Math.round(s.average_heartrate)}bpm` : '—'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
