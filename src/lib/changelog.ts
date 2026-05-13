@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.9.0',
+    date: '2026-05-13',
+    features: [
+      '개인 통계 — 누적 거리/횟수, 최고 페이스, 최장 거리, 현재/역대 최장 스트릭, 월별 거리 차트',
+    ],
+  },
+  {
     version: '1.8.0',
     date: '2026-05-13',
     features: [

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Flame } from 'lucide-react'
+import { Flame, BarChart2 } from 'lucide-react'
 import { useMonthRuns } from '@/hooks/use-month-runs'
 import { StreakCalendar } from './streak-calendar'
 import { MonthStats } from './month-stats'
 import { AddRunSheet } from './add-run-sheet'
+import { PersonalStatsDialog } from './personal-stats-dialog'
 
 function currentYearMonth() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
@@ -13,6 +14,7 @@ function currentYearMonth() {
 
 export function StreakView() {
   const [yearMonth, setYearMonth] = useState(currentYearMonth)
+  const [statsOpen, setStatsOpen] = useState(false)
   const { dayMap, rolling, loading, refetch } = useMonthRuns(yearMonth)
 
   return (
@@ -22,9 +24,17 @@ export function StreakView() {
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold">내 스트릭</h1>
           <Flame className="h-5 w-5 text-primary animate-pulse" />
+          <button
+            onClick={() => setStatsOpen(true)}
+            className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <BarChart2 className="h-4 w-4" />
+          </button>
         </div>
         <AddRunSheet onSuccess={refetch} />
       </div>
+
+      <PersonalStatsDialog open={statsOpen} onClose={() => setStatsOpen(false)} />
 
       {/* 이번 달 통계 */}
       <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} yearMonth={yearMonth} />
