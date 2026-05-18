@@ -18,27 +18,26 @@ function getGoalPeriod(
   weeklyStartDay = 0,
   monthlyStartDay = 1,
 ): { start: string; end: string; label: string } {
-  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  const toKey = (d: Date) => d.toISOString().slice(0, 10)
+  // +9h shift: toISOString()과 getUTC*()가 KST 기준값을 반환
+  const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const todayKey = kstNow.toISOString().slice(0, 10) // KST "YYYY-MM-DD"
+  const [y, m, d] = todayKey.split('-').map(Number)
+  const dayOfWeek = kstNow.getUTCDay() // getDay() 대신 getUTCDay() — +9h 객체에서 올바른 KST 요일
   const pad = (n: number) => String(n).padStart(2, '0')
 
   if (goalType === 'daily') {
-    const today = toKey(now)
-    return { start: today, end: today, label: '오늘' }
+    return { start: todayKey, end: todayKey, label: '오늘' }
   }
 
   if (goalType === 'weekly') {
-    const daysSince = (now.getDay() - weeklyStartDay + 7) % 7
-    const start = new Date(now); start.setDate(now.getDate() - daysSince)
-    const end = new Date(start); end.setDate(start.getDate() + 6)
-    return { start: toKey(start), end: toKey(end), label: '이번 주' }
+    const daysSince = (dayOfWeek - weeklyStartDay + 7) % 7
+    // setDate() 대신 Date.UTC()로 새 객체 생성 — 로컬 타임존 개입 없음
+    const start = new Date(Date.UTC(y, m - 1, d - daysSince))
+    const end = new Date(Date.UTC(y, m - 1, d - daysSince + 6))
+    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10), label: '이번 주' }
   }
 
   // monthly
-  const todayKey = toKey(now)
-  const [yStr, mStr, dStr] = todayKey.split('-')
-  const y = parseInt(yStr), m = parseInt(mStr), d = parseInt(dStr)
-
   let startY: number, startM: number
   if (d >= monthlyStartDay) {
     startY = y; startM = m
@@ -53,7 +52,8 @@ function getGoalPeriod(
 
   let endStr: string
   if (endD <= 0) {
-    const lastDay = new Date(startY, startM, 0).getDate()
+    // Date.UTC(y, m, 0) = month m(0-indexed)의 day 0 = 전달 마지막 날
+    const lastDay = new Date(Date.UTC(startY, startM, 0)).getUTCDate()
     endStr = `${startY}-${pad(startM)}-${pad(lastDay)}`
   } else {
     endStr = `${nextY}-${pad(nextM)}-${pad(endD)}`
@@ -71,25 +71,25 @@ function getPreviousPeriod(
   weeklyStartDay = 0,
   monthlyStartDay = 1,
 ): { start: string; end: string } {
-  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  const toKey = (d: Date) => d.toISOString().slice(0, 10)
+  const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const todayKey = kstNow.toISOString().slice(0, 10)
+  const [y, m, d] = todayKey.split('-').map(Number)
+  const dayOfWeek = kstNow.getUTCDay()
   const pad = (n: number) => String(n).padStart(2, '0')
 
   if (goalType === 'daily') {
-    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
-    const key = toKey(yesterday)
+    const key = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10)
     return { start: key, end: key }
   }
 
   if (goalType === 'weekly') {
-    const daysSince = (now.getDay() - weeklyStartDay + 7) % 7
-    const thisStart = new Date(now); thisStart.setDate(now.getDate() - daysSince)
-    const prevEnd = new Date(thisStart); prevEnd.setDate(thisStart.getDate() - 1)
-    const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate() - 7)
-    return { start: toKey(prevStart), end: toKey(prevEnd) }
+    const daysSince = (dayOfWeek - weeklyStartDay + 7) % 7
+    const prevStart = new Date(Date.UTC(y, m - 1, d - daysSince - 7))
+    const prevEnd = new Date(Date.UTC(y, m - 1, d - daysSince - 1))
+    return { start: prevStart.toISOString().slice(0, 10), end: prevEnd.toISOString().slice(0, 10) }
   }
 
-  // monthly: period before current
+  // monthly: 현재 기간의 바로 이전 기간
   const { start: curStartStr } = getGoalPeriod(goalType, weeklyStartDay, monthlyStartDay)
   const [curY, curM] = curStartStr.split('-').map(Number)
   const prevM = curM === 1 ? 12 : curM - 1
@@ -98,7 +98,7 @@ function getPreviousPeriod(
 
   let endStr: string
   if (endD <= 0) {
-    const lastDay = new Date(prevY, prevM, 0).getDate()
+    const lastDay = new Date(Date.UTC(prevY, prevM, 0)).getUTCDate()
     endStr = `${prevY}-${pad(prevM)}-${pad(lastDay)}`
   } else {
     endStr = `${curY}-${pad(curM)}-${pad(endD)}`
