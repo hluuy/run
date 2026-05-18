@@ -122,6 +122,8 @@ export interface Database {
           name: string
           goal_type: 'daily' | 'weekly' | 'monthly' | null
           goal_distance_km: number | null
+          weekly_start_day: number | null
+          monthly_start_day: number | null
           created_by: string
           created_at: string
         }
@@ -130,6 +132,8 @@ export interface Database {
           name: string
           goal_type?: 'daily' | 'weekly' | 'monthly' | null
           goal_distance_km?: number | null
+          weekly_start_day?: number | null
+          monthly_start_day?: number | null
           created_by: string
           created_at?: string
         }
@@ -138,6 +142,8 @@ export interface Database {
           name?: string
           goal_type?: 'daily' | 'weekly' | 'monthly' | null
           goal_distance_km?: number | null
+          weekly_start_day?: number | null
+          monthly_start_day?: number | null
           created_by?: string
           created_at?: string
         }

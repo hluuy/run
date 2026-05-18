@@ -6,7 +6,9 @@ import { z } from 'zod'
 const schema = z.object({
   name: z.string().min(1).max(30).optional(),
   goal_type: z.enum(['daily', 'weekly', 'monthly']).optional(),
-}).refine(d => d.name !== undefined || d.goal_type !== undefined, {
+  weekly_start_day: z.number().int().min(0).max(6).optional(),
+  monthly_start_day: z.number().int().min(1).max(28).optional(),
+}).refine(d => d.name !== undefined || d.goal_type !== undefined || d.weekly_start_day !== undefined || d.monthly_start_day !== undefined, {
   message: 'at_least_one_field_required',
 })
 

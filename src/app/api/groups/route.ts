@@ -6,6 +6,8 @@ import { z } from 'zod'
 const schema = z.object({
   name: z.string().min(1).max(30),
   goal_type: z.enum(['daily', 'weekly', 'monthly']),
+  weekly_start_day: z.number().int().min(0).max(6).optional(),
+  monthly_start_day: z.number().int().min(1).max(28).optional(),
 })
 
 export async function POST(request: Request) {
@@ -19,7 +21,13 @@ export async function POST(request: Request) {
   const admin = createAdminClient()
   const { data: group, error } = await admin
     .from('groups')
-    .insert({ name: body.data.name, goal_type: body.data.goal_type, created_by: user.id })
+    .insert({
+      name: body.data.name,
+      goal_type: body.data.goal_type,
+      weekly_start_day: body.data.weekly_start_day ?? 0,
+      monthly_start_day: body.data.monthly_start_day ?? 1,
+      created_by: user.id,
+    })
     .select('id')
     .single()
 

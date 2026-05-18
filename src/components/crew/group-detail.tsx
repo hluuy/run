@@ -11,54 +11,102 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import type { Group, LeaderboardEntry } from '@/types'
 
-function getPreviousPeriod(goalType: string): { start: string; end: string } {
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+
+function getGoalPeriod(
+  goalType: string,
+  weeklyStartDay = 0,
+  monthlyStartDay = 1,
+): { start: string; end: string; label: string } {
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
   const toKey = (d: Date) => d.toISOString().slice(0, 10)
-
-  if (goalType === 'daily') {
-    const yesterday = new Date(now)
-    yesterday.setDate(now.getDate() - 1)
-    const key = toKey(yesterday)
-    return { start: key, end: key }
-  }
-  if (goalType === 'weekly') {
-    const day = now.getDay()
-    const thisSun = new Date(now); thisSun.setDate(now.getDate() - day)
-    const lastSat = new Date(thisSun); lastSat.setDate(thisSun.getDate() - 1)
-    const lastSun = new Date(lastSat); lastSun.setDate(lastSat.getDate() - 6)
-    return { start: toKey(lastSun), end: toKey(lastSat) }
-  }
-  // monthly: 저번 달
-  const prevFirst = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const py = prevFirst.getFullYear()
-  const pm = prevFirst.getMonth() + 1
-  const lastDay = new Date(py, pm, 0).getDate()
-  return {
-    start: `${py}-${String(pm).padStart(2, '0')}-01`,
-    end: `${py}-${String(pm).padStart(2, '0')}-${lastDay}`,
-  }
-}
-
-function getGoalPeriod(goalType: string): { start: string; end: string; label: string } {
-  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  const toKey = (d: Date) => d.toISOString().slice(0, 10)
+  const pad = (n: number) => String(n).padStart(2, '0')
 
   if (goalType === 'daily') {
     const today = toKey(now)
     return { start: today, end: today, label: '오늘' }
   }
+
   if (goalType === 'weekly') {
-    const day = now.getDay()
-    const sun = new Date(now); sun.setDate(now.getDate() - day)
-    const sat = new Date(sun); sat.setDate(sun.getDate() + 6)
-    return { start: toKey(sun), end: toKey(sat), label: '이번 주' }
+    const daysSince = (now.getDay() - weeklyStartDay + 7) % 7
+    const start = new Date(now); start.setDate(now.getDate() - daysSince)
+    const end = new Date(start); end.setDate(start.getDate() + 6)
+    return { start: toKey(start), end: toKey(end), label: '이번 주' }
   }
-  const y = now.getFullYear(), m = now.getMonth() + 1
-  const last = new Date(y, m, 0).getDate()
+
+  // monthly
+  const todayKey = toKey(now)
+  const [yStr, mStr, dStr] = todayKey.split('-')
+  const y = parseInt(yStr), m = parseInt(mStr), d = parseInt(dStr)
+
+  let startY: number, startM: number
+  if (d >= monthlyStartDay) {
+    startY = y; startM = m
+  } else {
+    startM = m === 1 ? 12 : m - 1
+    startY = m === 1 ? y - 1 : y
+  }
+
+  const nextM = startM === 12 ? 1 : startM + 1
+  const nextY = startM === 12 ? startY + 1 : startY
+  const endD = monthlyStartDay - 1
+
+  let endStr: string
+  if (endD <= 0) {
+    const lastDay = new Date(startY, startM, 0).getDate()
+    endStr = `${startY}-${pad(startM)}-${pad(lastDay)}`
+  } else {
+    endStr = `${nextY}-${pad(nextM)}-${pad(endD)}`
+  }
+
   return {
-    start: `${y}-${String(m).padStart(2, '0')}-01`,
-    end: `${y}-${String(m).padStart(2, '0')}-${last}`,
+    start: `${startY}-${pad(startM)}-${pad(monthlyStartDay)}`,
+    end: endStr,
     label: '이번 달',
+  }
+}
+
+function getPreviousPeriod(
+  goalType: string,
+  weeklyStartDay = 0,
+  monthlyStartDay = 1,
+): { start: string; end: string } {
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const toKey = (d: Date) => d.toISOString().slice(0, 10)
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  if (goalType === 'daily') {
+    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
+    const key = toKey(yesterday)
+    return { start: key, end: key }
+  }
+
+  if (goalType === 'weekly') {
+    const daysSince = (now.getDay() - weeklyStartDay + 7) % 7
+    const thisStart = new Date(now); thisStart.setDate(now.getDate() - daysSince)
+    const prevEnd = new Date(thisStart); prevEnd.setDate(thisStart.getDate() - 1)
+    const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate() - 7)
+    return { start: toKey(prevStart), end: toKey(prevEnd) }
+  }
+
+  // monthly: period before current
+  const { start: curStartStr } = getGoalPeriod(goalType, weeklyStartDay, monthlyStartDay)
+  const [curY, curM] = curStartStr.split('-').map(Number)
+  const prevM = curM === 1 ? 12 : curM - 1
+  const prevY = curM === 1 ? curY - 1 : curY
+  const endD = monthlyStartDay - 1
+
+  let endStr: string
+  if (endD <= 0) {
+    const lastDay = new Date(prevY, prevM, 0).getDate()
+    endStr = `${prevY}-${pad(prevM)}-${pad(lastDay)}`
+  } else {
+    endStr = `${curY}-${pad(curM)}-${pad(endD)}`
+  }
+
+  return {
+    start: `${prevY}-${pad(prevM)}-${pad(monthlyStartDay)}`,
+    end: endStr,
   }
 }
 
@@ -106,20 +154,20 @@ function MemberCard({
     <div className={`rounded-2xl border p-4 space-y-3 transition-colors ${
       isMe ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'
     }`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           disabled={!onViewStreak}
           onClick={onViewStreak}
-          className={`flex items-center gap-2.5 text-left ${onViewStreak ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
+          className={`flex min-w-0 flex-1 items-center gap-2.5 text-left ${onViewStreak ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
         >
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
+          <div className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-sm font-bold ${
             isMe ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground'
           }`}>
             {entry.nickname.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="font-semibold text-sm leading-none">
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-sm leading-none">
               {entry.nickname}
               {isMe && <span className="ml-1.5 text-[10px] text-primary font-normal">나</span>}
             </p>
@@ -134,7 +182,7 @@ function MemberCard({
           </div>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {achieved && <CheckCircle2 className="h-4 w-4 text-green-500" />}
           {hasGoal && !achieved && entry.total_km > 0 && (
             <Flame className="h-4 w-4 text-primary/80" />
@@ -142,7 +190,7 @@ function MemberCard({
           {isMe && (
             <button
               onClick={() => setEditingGoal(!editingGoal)}
-              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 whitespace-nowrap"
             >
               {hasGoal ? '수정' : '목표 설정'}
             </button>
@@ -218,6 +266,8 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [editName, setEditName] = useState(group.name)
   const [editGoalType, setEditGoalType] = useState<'daily' | 'weekly' | 'monthly'>(group.goal_type ?? 'weekly')
+  const [editWeeklyStartDay, setEditWeeklyStartDay] = useState(group.weekly_start_day ?? 0)
+  const [editMonthlyStartDay, setEditMonthlyStartDay] = useState(group.monthly_start_day ?? 1)
   const [savingSettings, setSavingSettings] = useState(false)
   const [kickingId, setKickingId] = useState<string | null>(null)
   const [confirmKickId, setConfirmKickId] = useState<string | null>(null)
@@ -226,8 +276,10 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   async function load() {
     if (!group.goal_type) { setLoading(false); return }
     try {
-      const { start, end } = getGoalPeriod(group.goal_type)
-      const { start: ps, end: pe } = getPreviousPeriod(group.goal_type)
+      const wsd = group.weekly_start_day ?? 0
+      const msd = group.monthly_start_day ?? 1
+      const { start, end } = getGoalPeriod(group.goal_type, wsd, msd)
+      const { start: ps, end: pe } = getPreviousPeriod(group.goal_type, wsd, msd)
 
       const [{ data: currData }, { data: prevData }, { data: memberData }] = await Promise.all([
         supabase.rpc('get_group_leaderboard', { p_group_id: group.id, p_start: start, p_end: end }),
@@ -299,6 +351,8 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   function openSettings() {
     setEditName(group.name)
     setEditGoalType(group.goal_type ?? 'weekly')
+    setEditWeeklyStartDay(group.weekly_start_day ?? 0)
+    setEditMonthlyStartDay(group.monthly_start_day ?? 1)
     setConfirmKickId(null)
     setSettingsOpen(true)
   }
@@ -306,9 +360,13 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
   async function saveSettings() {
     if (!editName.trim()) return
     setSavingSettings(true)
-    const updates: Record<string, string> = {}
+    const updates: Record<string, string | number> = {}
     if (editName.trim() !== group.name) updates.name = editName.trim()
     if (editGoalType !== group.goal_type) updates.goal_type = editGoalType
+    if (editGoalType === 'weekly' && editWeeklyStartDay !== (group.weekly_start_day ?? 0))
+      updates.weekly_start_day = editWeeklyStartDay
+    if (editGoalType === 'monthly' && editMonthlyStartDay !== (group.monthly_start_day ?? 1))
+      updates.monthly_start_day = editMonthlyStartDay
 
     if (Object.keys(updates).length === 0) {
       setSavingSettings(false)
@@ -352,7 +410,9 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
     onUpdated()
   }
 
-  const { label } = group.goal_type ? getGoalPeriod(group.goal_type) : { label: '' }
+  const { label } = group.goal_type
+    ? getGoalPeriod(group.goal_type, group.weekly_start_day ?? 0, group.monthly_start_day ?? 1)
+    : { label: '' }
 
   return (
     <div className="space-y-3">
@@ -467,6 +527,51 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
                 ))}
               </div>
             </div>
+
+            {editGoalType === 'weekly' && (
+              <div className="space-y-2">
+                <Label>주 시작 요일</Label>
+                <div className="grid grid-cols-7 gap-1">
+                  {WEEKDAY_LABELS.map((label, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setEditWeeklyStartDay(idx)}
+                      className={`rounded-lg border py-2 text-xs font-semibold transition-colors ${
+                        editWeeklyStartDay === idx
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card hover:bg-muted'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {editGoalType === 'monthly' && (
+              <div className="space-y-2">
+                <Label>월 시작일</Label>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setEditMonthlyStartDay(day)}
+                      className={`rounded-lg border py-1.5 text-xs font-semibold transition-colors ${
+                        editMonthlyStartDay === day
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card hover:bg-muted'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">매월 {editMonthlyStartDay}일 00:00 KST 기준으로 기간이 시작됩니다.</p>
+              </div>
+            )}
             <Button
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={saveSettings}

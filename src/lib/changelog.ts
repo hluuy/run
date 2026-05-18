@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10.0',
+    date: '2026-05-18',
+    features: [
+      '크루 주간 목표 — 주 시작 요일 설정 (일~토)',
+      '크루 월간 목표 — 월 시작일 설정 (1~28일)',
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-05-13',
     features: [

@@ -14,6 +14,8 @@ import { Plus, Loader2 } from 'lucide-react'
 const schema = z.object({
   name: z.string().min(1, '그룹 이름을 입력해주세요.').max(30),
   goal_type: z.enum(['daily', 'weekly', 'monthly']),
+  weekly_start_day: z.number().int().min(0).max(6),
+  monthly_start_day: z.number().int().min(1).max(28),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -23,14 +25,18 @@ const GOAL_OPTIONS = [
   { value: 'monthly', label: '월간' },
 ] as const
 
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+
 export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { goal_type: 'weekly' },
+    defaultValues: { goal_type: 'weekly', weekly_start_day: 0, monthly_start_day: 1 },
   })
   const selectedType = watch('goal_type')
+  const weeklyStartDay = watch('weekly_start_day')
+  const monthlyStartDay = watch('monthly_start_day')
 
   async function onSubmit(values: FormValues) {
     setLoading(true)
@@ -81,6 +87,51 @@ export function CreateGroupDialog({ onCreated }: { onCreated: () => void }) {
               ))}
             </div>
           </div>
+
+          {selectedType === 'weekly' && (
+            <div className="space-y-2">
+              <Label>주 시작 요일</Label>
+              <div className="grid grid-cols-7 gap-1">
+                {WEEKDAY_LABELS.map((label, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setValue('weekly_start_day', idx)}
+                    className={`rounded-lg border py-2 text-xs font-semibold transition-colors ${
+                      weeklyStartDay === idx
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-card hover:bg-muted'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedType === 'monthly' && (
+            <div className="space-y-2">
+              <Label>월 시작일</Label>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setValue('monthly_start_day', day)}
+                    className={`rounded-lg border py-1.5 text-xs font-semibold transition-colors ${
+                      monthlyStartDay === day
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-card hover:bg-muted'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">매월 {monthlyStartDay}일 00:00 KST 기준으로 기간이 시작됩니다.</p>
+            </div>
+          )}
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}만들기
