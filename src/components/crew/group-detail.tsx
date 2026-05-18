@@ -314,7 +314,7 @@ export function GroupDetail({ group, onUpdated }: { group: Group; onUpdated: () 
       setIsCreator(user?.id === group.created_by)
     })
     load()
-  }, [group.id])
+  }, [group.id, group.goal_type, group.weekly_start_day, group.monthly_start_day])
 
   async function shareInvite() {
     setSharing(true)
