@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { ApiTokenSection } from './api-token-section'
 import { NotificationSection } from './notification-section'
+import { StravaSection } from './strava-section'
 import { PwaInstallSection } from './pwa-install-section'
 import { toast } from 'sonner'
 import { Loader2, TriangleAlert, ChevronDown } from 'lucide-react'
@@ -96,6 +97,11 @@ export function SettingsView() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Strava 연동 */}
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <StravaSection />
         </div>
 
         {/* API 토큰 */}

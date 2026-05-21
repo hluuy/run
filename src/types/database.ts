@@ -75,7 +75,7 @@ export interface Database {
           polyline: string | null
           elevation_gain_m: number | null
           splits: Split[] | null
-          source: 'manual' | 'shortcut' | 'gpx'
+          source: 'manual' | 'shortcut' | 'gpx' | 'strava'
           created_at: string
         }
         Insert: {
@@ -93,7 +93,7 @@ export interface Database {
           polyline?: string | null
           elevation_gain_m?: number | null
           splits?: Split[] | null
-          source?: 'manual' | 'shortcut' | 'gpx'
+          source?: 'manual' | 'shortcut' | 'gpx' | 'strava'
           created_at?: string
         }
         Update: {
@@ -111,7 +111,7 @@ export interface Database {
           polyline?: string | null
           elevation_gain_m?: number | null
           splits?: Split[] | null
-          source?: 'manual' | 'shortcut' | 'gpx'
+          source?: 'manual' | 'shortcut' | 'gpx' | 'strava'
           created_at?: string
         }
         Relationships: []
@@ -202,6 +202,39 @@ export interface Database {
           max_uses?: number
           use_count?: number
           revoked?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      strava_connections: {
+        Row: {
+          user_id: string
+          strava_athlete_id: number
+          strava_athlete_name: string | null
+          access_token: string
+          refresh_token: string
+          expires_at: string
+          last_synced_at: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          strava_athlete_id: number
+          strava_athlete_name?: string | null
+          access_token: string
+          refresh_token: string
+          expires_at: string
+          last_synced_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          strava_athlete_id?: number
+          strava_athlete_name?: string | null
+          access_token?: string
+          refresh_token?: string
+          expires_at?: string
+          last_synced_at?: string | null
           created_at?: string
         }
         Relationships: []

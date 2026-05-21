@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.0',
+    date: '2026-05-21',
+    features: [
+      'Strava OAuth 연동 — 설정에서 버튼 한 번으로 연결',
+      '동기화 버튼으로 Strava 러닝 기록 즉시 가져오기 (경로, 페이스, 심박수, 구간 포함)',
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-05-18',
     features: [

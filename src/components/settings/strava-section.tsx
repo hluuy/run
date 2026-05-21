@@ -1,0 +1,161 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { RefreshCw, Loader2, Unlink, CheckCircle2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
+
+interface StravaStatus {
+  connected: boolean
+  athlete_name?: string | null
+  last_synced_at?: string | null
+}
+
+function formatSyncedAt(iso: string | null | undefined): string {
+  if (!iso) return '동기화 전'
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 60) return '방금 전'
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`
+  return new Date(iso).toLocaleDateString('ko-KR')
+}
+
+export function StravaSection() {
+  const [status, setStatus] = useState<StravaStatus | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/strava/status')
+      .then(r => r.json())
+      .then(setStatus)
+
+    // OAuth 콜백 결과 처리
+    const params = new URLSearchParams(window.location.search)
+    const stravaParam = params.get('strava')
+    if (stravaParam === 'connected') {
+      toast.success('Strava 연동이 완료됐습니다.')
+      window.history.replaceState({}, '', '/settings')
+    } else if (stravaParam === 'error') {
+      toast.error('Strava 연동에 실패했습니다. 다시 시도해 주세요.')
+      window.history.replaceState({}, '', '/settings')
+    } else if (stravaParam === 'cancelled') {
+      window.history.replaceState({}, '', '/settings')
+    }
+  }, [])
+
+  async function sync() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/runs/strava-sync', { method: 'POST' })
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (data.error === 'rate_limited') toast.error('Strava 요청 한도 초과. 잠시 후 다시 시도해 주세요.')
+        else toast.error('동기화 실패. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      const now = new Date().toISOString()
+      setStatus(prev => prev ? { ...prev, last_synced_at: now } : prev)
+
+      if (data.synced === 0) toast.success('새로운 러닝 기록이 없습니다.')
+      else toast.success(`${data.synced}개의 러닝 기록을 가져왔습니다.`)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  async function disconnect() {
+    setDisconnecting(true)
+    const res = await fetch('/api/auth/strava', { method: 'DELETE' })
+    setDisconnecting(false)
+    setDisconnectOpen(false)
+    if (res.ok) {
+      setStatus({ connected: false })
+      toast.success('Strava 연동이 해제됐습니다.')
+    } else {
+      toast.error('연동 해제 실패')
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium text-sm">Strava 연동</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {status?.connected
+              ? `${status.athlete_name ?? ''} · 마지막 동기화: ${formatSyncedAt(status.last_synced_at)}`
+              : '연결하면 러닝 기록을 자동으로 가져옵니다'}
+          </p>
+        </div>
+
+        {status === null ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : status.connected ? (
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
+              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span className="ml-1.5">동기화</span>
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={() => setDisconnectOpen(true)}
+              aria-label="연동 해제"
+            >
+              <Unlink className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            className="bg-[#FC4C02] hover:bg-[#e04500] text-white"
+            onClick={() => { window.location.href = '/api/auth/strava' }}
+          >
+            연결
+          </Button>
+        )}
+      </div>
+
+      {status?.connected && (
+        <div className="flex items-center gap-1.5 text-xs text-green-500">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>연동됨</span>
+        </div>
+      )}
+
+      <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Strava 연동 해제</DialogTitle>
+            <DialogDescription className="text-left pt-1">
+              연동을 해제하면 이후 Strava 기록을 자동으로 가져올 수 없습니다.
+              기존에 가져온 러닝 기록은 삭제되지 않습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setDisconnectOpen(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" size="sm" onClick={disconnect} disabled={disconnecting}>
+              {disconnecting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              해제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
