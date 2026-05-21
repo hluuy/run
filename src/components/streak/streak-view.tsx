@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { Flame, BarChart2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Flame, BarChart2, RefreshCw, Loader2 } from 'lucide-react'
 import { useMonthRuns } from '@/hooks/use-month-runs'
 import { StreakCalendar } from './streak-calendar'
 import { MonthStats } from './month-stats'
 import { AddRunSheet } from './add-run-sheet'
 import { PersonalStatsDialog } from './personal-stats-dialog'
+import { toast } from 'sonner'
 
 function currentYearMonth() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7)
@@ -17,6 +18,30 @@ export function StreakView() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [statsOpenCount, setStatsOpenCount] = useState(0)
   const { dayMap, rolling, loading, refetch } = useMonthRuns(yearMonth)
+  const [stravaConnected, setStravaConnected] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/strava/status')
+      .then(r => r.json())
+      .then(d => setStravaConnected(d.connected))
+  }, [])
+
+  async function syncStrava() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/runs/strava-sync', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error('동기화 실패. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+      if (data.synced === 0) toast.success('새로운 러닝 기록이 없습니다.')
+      else { toast.success(`${data.synced}개의 기록을 가져왔습니다.`); refetch() }
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   return (
     <div className="flex flex-col">
@@ -32,7 +57,21 @@ export function StreakView() {
             <BarChart2 className="h-4 w-4" />
           </button>
         </div>
-        <AddRunSheet onSuccess={refetch} />
+        <div className="flex items-center gap-2">
+          {stravaConnected && (
+            <button
+              onClick={syncStrava}
+              disabled={syncing}
+              className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              aria-label="Strava 동기화"
+            >
+              {syncing
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <RefreshCw className="h-4 w-4" />}
+            </button>
+          )}
+          <AddRunSheet onSuccess={refetch} />
+        </div>
       </div>
 
       <PersonalStatsDialog open={statsOpen} onClose={() => setStatsOpen(false)} openCount={statsOpenCount} />
