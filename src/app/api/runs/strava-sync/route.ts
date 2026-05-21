@@ -84,6 +84,7 @@ export async function POST() {
 
     if (error) {
       if (error.code === '23505') skipped++
+      else debug.push({ id: activity.id, type: 'insert_error', sport_type: error.code, date: error.message })
     } else {
       synced++
     }
