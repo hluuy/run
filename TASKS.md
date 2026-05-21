@@ -1,10 +1,10 @@
-# 작업 현황 (2026-05-13 업데이트)
+# 작업 현황 (2026-05-21 업데이트)
 
 ## 서비스 정보
 - **프로덕션:** https://runstreak-nine.vercel.app
 - **GitHub:** https://github.com/hluuy/run
 - **스택:** Next.js 15, Supabase, Vercel, Tailwind CSS 4, shadcn/ui
-- **현재 버전:** 1.8.0
+- **현재 버전:** 1.11.0
 
 ## 로컬 실행
 
@@ -145,6 +145,20 @@ CRON_SECRET=
 
 ---
 
+## 2026-05-21 작업 완료
+
+### v1.11.0 (기능)
+- [x] **Strava OAuth 연동** — 설정 화면에서 버튼으로 Strava 계정 연결
+  - `/api/auth/strava` (OAuth 시작), `/api/auth/strava/callback`, `/api/auth/strava/status`, DELETE 해제
+  - `strava_connections` 테이블 추가 (access_token, refresh_token, expires_at 서버 보관)
+  - 토큰 만료 시 자동 갱신 (`src/lib/strava.ts`)
+  - `POST /api/runs/strava-sync` — 최근 30일(첫 동기화) 또는 마지막 동기화 -1일 이후 기록 가져오기
+  - polyline, splits, elevation_gain_m, is_treadmill 모두 포함
+  - `runs.source = 'strava'` 추가 (DB CHECK 제약 업데이트 필요)
+- [x] **스트릭 화면 Strava 동기화 버튼** — Strava 연동 시 헤더에 ↺ 버튼 표시, 완료 후 캘린더 즉시 갱신
+
+---
+
 ## 2026-05-13 작업 완료
 
 ### v1.8.0 (기능)
@@ -171,8 +185,19 @@ CRON_SECRET=
 
 ---
 
+## 진행 예정
+
+- [ ] **Strava Webhook** — 러닝 완료 시 자동 동기화 (버튼 클릭 불필요)
+- [ ] **iOS Shortcuts 섹션 제거** — 설정 화면 API 토큰 섹션 삭제 (Strava로 완전 대체)
+- [ ] **러닝 기록 수정** — 현재 삭제만 가능, 수정 기능 추가
+- [ ] **크루 화면 멤버 스트릭 달력** — 리더보드 순위 외 멤버별 달력 보기
+- [ ] **스트릭 캘린더 월 목표 달성 여부 표시**
+
+---
+
 ## 미결 이슈
 
+- [ ] **이메일 로그인 보안** — 기존 사용자 이메일 아는 경우 즉시 로그인 가능. Supabase 이메일 발송 한도(시간당 3회) 문제로 의도적 설계. 소규모 신뢰 그룹 앱 특성상 현재 수준 유지
 - [ ] **listUsers 전체 스캔 개선** — Supabase admin JS 타입에 `generateLink.shouldCreateUser` 미지원으로 유지 중. rate limiting(1분 5회)으로 열거 공격 실용성 완화. 향후 SDK 업데이트 시 재검토
 
 - [ ] **Google OAuth 동의 화면 서비스명 변경** — 현재 `supabase.co` 도메인 이름으로 표시됨
@@ -199,9 +224,7 @@ CRON_SECRET=
 
 ## 알려진 한계
 
-- **iOS 26 Shortcuts + HealthKit:** 직접 접근 차단
-  - 대안: **Strava API 연동**으로 해결 진행 중 (v1.6.0)
-  - 단축어에서 Strava OAuth 토큰 갱신 → 최근 활동 조회 → `/api/runs/sync` POST 흐름 구축 완료 (테스트 단계)
+- **iOS Shortcuts 의존성 제거됨** — v1.11.0에서 Strava OAuth 서버 연동으로 완전 대체. 설정 화면에서 버튼으로 연결 후 동기화 버튼으로 기록 가져오기
   - 근본 해결: 네이티브 iOS 앱 (Apple Developer Program $99/년) — 현재 보류
 - **API 토큰:** 다른 기기에서는 토큰 원문 표시 안 됨 (localStorage는 기기별)
 - **Supabase Refresh Token Duration:** 기본 7일, 늘리려면 Pro 플랜 필요
