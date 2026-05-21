@@ -38,6 +38,7 @@ export async function POST() {
   if (!listRes.ok) return NextResponse.json({ error: 'strava_api_error' }, { status: 502 })
 
   const activities: StravaActivity[] = await listRes.json()
+  const debug = activities.map(a => ({ id: a.id, type: a.type, sport_type: a.sport_type, date: a.start_date_local }))
   const runs = activities.filter(a => RUN_SPORT_TYPES.has(a.sport_type ?? a.type))
 
   let synced = 0
@@ -93,7 +94,7 @@ export async function POST() {
     .update({ last_synced_at: new Date().toISOString() })
     .eq('user_id', user.id)
 
-  return NextResponse.json({ synced, skipped })
+  return NextResponse.json({ synced, skipped, debug })
 }
 
 interface StravaActivity {
