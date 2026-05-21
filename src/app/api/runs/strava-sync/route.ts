@@ -24,9 +24,9 @@ export async function POST() {
   const accessToken = await ensureFreshToken(connection)
   if (!accessToken) return NextResponse.json({ error: 'token_refresh_failed' }, { status: 400 })
 
-  // 첫 동기화: 30일, 이후: 마지막 동기화 시점부터
+  // 첫 동기화: 30일, 이후: 마지막 동기화 - 1일 (Strava 업로드 지연 대응)
   const after = connection.last_synced_at
-    ? Math.floor(new Date(connection.last_synced_at).getTime() / 1000)
+    ? Math.floor(new Date(connection.last_synced_at).getTime() / 1000) - 24 * 60 * 60
     : Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60
 
   const listRes = await fetch(
