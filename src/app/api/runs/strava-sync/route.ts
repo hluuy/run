@@ -21,7 +21,7 @@ export async function GET() {
   return NextResponse.json(data ?? null)
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -38,6 +38,56 @@ export async function POST() {
 
   const accessToken = await ensureFreshToken(connection)
   if (!accessToken) return NextResponse.json({ error: 'token_refresh_failed' }, { status: 400 })
+
+  // skip_dates: null = 아직 확인 안 됨, [] = 전부 추가, ['date',...] = 해당 날짜 건너뜀
+  let skipDates: string[] | null = null
+  try {
+    const body = await request.json()
+    if (body && Array.isArray(body.skip_dates)) skipDates = body.skip_dates
+  } catch { /* no body */ }
+
+  // 첫 동기화이고 아직 확인 전이라면 → 최근 5개로 충돌 검사
+  if (!connection.last_synced_at && skipDates === null) {
+    const previewRes = await fetch(
+      'https://www.strava.com/api/v3/athlete/activities?per_page=5',
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
+    if (previewRes.status === 429) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+    if (!previewRes.ok) return NextResponse.json({ error: 'strava_api_error' }, { status: 502 })
+
+    const previewActivities: StravaActivity[] = await previewRes.json()
+    const previewRuns = previewActivities.filter(a => RUN_SPORT_TYPES.has(a.sport_type ?? a.type))
+    const previewDates = previewRuns.map(a => a.start_date_local.slice(0, 10))
+
+    if (previewDates.length > 0) {
+      const { data: existingRuns } = await admin
+        .from('runs')
+        .select('local_date_key, distance_km')
+        .eq('user_id', user.id)
+        .in('local_date_key', previewDates)
+
+      if (existingRuns && existingRuns.length > 0) {
+        const existingByDate = new Map<string, number>()
+        for (const r of existingRuns) {
+          existingByDate.set(r.local_date_key, (existingByDate.get(r.local_date_key) ?? 0) + r.distance_km)
+        }
+
+        const conflicts = previewRuns
+          .filter(a => existingByDate.has(a.start_date_local.slice(0, 10)))
+          .map(a => ({
+            date: a.start_date_local.slice(0, 10),
+            strava_distance_km: a.distance / 1000,
+            existing_distance_km: existingByDate.get(a.start_date_local.slice(0, 10))!,
+          }))
+
+        if (conflicts.length > 0) {
+          return NextResponse.json({ needs_confirmation: true, conflicts })
+        }
+      }
+    }
+    // 충돌 없음 → 전부 추가로 진행
+    skipDates = []
+  }
 
   const { data: defaultShoe } = await admin
     .from('shoes')
@@ -66,8 +116,10 @@ export async function POST() {
   let synced = 0
   let skipped = 0
   const insertedRunIds: string[] = []
+  const skipDateSet = new Set(skipDates ?? [])
 
   for (const activity of runs) {
+    if (skipDateSet.has(activity.start_date_local.slice(0, 10))) { skipped++; continue }
     const distance_km = activity.distance / 1000
     const duration_sec = activity.moving_time
     if (distance_km < 0.1 || duration_sec < 10) continue

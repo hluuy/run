@@ -12,6 +12,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { StravaConflictDialog, type StravaConflict } from '@/components/strava-conflict-dialog'
 
 interface StravaStatus {
   connected: boolean
@@ -42,6 +43,8 @@ export function StravaSection() {
   const [lastSync, setLastSync] = useState<LastSync | null>(null)
   const [rollbackOpen, setRollbackOpen] = useState(false)
   const [rollingBack, setRollingBack] = useState(false)
+  const [conflicts, setConflicts] = useState<StravaConflict[]>([])
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/strava/status')
@@ -65,15 +68,25 @@ export function StravaSection() {
     }
   }, [])
 
-  async function sync() {
+  async function sync(options?: { skip_dates?: string[] }) {
     setSyncing(true)
     try {
-      const res = await fetch('/api/runs/strava-sync', { method: 'POST' })
+      const body = options?.skip_dates !== undefined ? { skip_dates: options.skip_dates } : undefined
+      const res = await fetch('/api/runs/strava-sync', {
+        method: 'POST',
+        ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+      })
       const data = await res.json()
 
       if (!res.ok) {
         if (data.error === 'rate_limited') toast.error('Strava 요청 한도 초과. 잠시 후 다시 시도해 주세요.')
         else toast.error('동기화 실패. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      if (data.needs_confirmation) {
+        setConflicts(data.conflicts)
+        setConflictDialogOpen(true)
         return
       }
 
@@ -85,7 +98,6 @@ export function StravaSection() {
         setLastSync(null)
       } else {
         toast.success(`${data.synced}개의 러닝 기록을 가져왔습니다.`)
-        // 최신 sync 정보 갱신
         const syncRes = await fetch('/api/runs/strava-sync')
         const syncData = await syncRes.json()
         setLastSync(syncData ?? null)
@@ -142,7 +154,7 @@ export function StravaSection() {
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : status.connected ? (
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
+            <Button size="sm" variant="outline" onClick={() => sync()} disabled={syncing}>
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               <span className="ml-1.5">동기화</span>
             </Button>
@@ -189,6 +201,15 @@ export function StravaSection() {
           </button>
         </div>
       )}
+
+      {/* 충돌 확인 */}
+      <StravaConflictDialog
+        open={conflictDialogOpen}
+        conflicts={conflicts}
+        onSkip={() => { setConflictDialogOpen(false); sync({ skip_dates: conflicts.map(c => c.date) }) }}
+        onAddAll={() => { setConflictDialogOpen(false); sync({ skip_dates: [] }) }}
+        onCancel={() => setConflictDialogOpen(false)}
+      />
 
       {/* 연동 해제 확인 */}
       <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>

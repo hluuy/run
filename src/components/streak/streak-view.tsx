@@ -8,6 +8,7 @@ import { MonthStats } from './month-stats'
 import { AddRunSheet } from './add-run-sheet'
 import { PersonalStatsDialog } from './personal-stats-dialog'
 import { ShoeSection } from './shoe-section'
+import { StravaConflictDialog, type StravaConflict } from '@/components/strava-conflict-dialog'
 import { toast } from 'sonner'
 
 function currentYearMonth() {
@@ -21,6 +22,8 @@ export function StreakView() {
   const { dayMap, rolling, loading, refetch } = useMonthRuns(yearMonth)
   const [stravaConnected, setStravaConnected] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [conflicts, setConflicts] = useState<StravaConflict[]>([])
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/strava/status')
@@ -28,13 +31,22 @@ export function StreakView() {
       .then(d => setStravaConnected(d.connected))
   }, [])
 
-  async function syncStrava() {
+  async function syncStrava(options?: { skip_dates?: string[] }) {
     setSyncing(true)
     try {
-      const res = await fetch('/api/runs/strava-sync', { method: 'POST' })
+      const body = options?.skip_dates !== undefined ? { skip_dates: options.skip_dates } : undefined
+      const res = await fetch('/api/runs/strava-sync', {
+        method: 'POST',
+        ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+      })
       const data = await res.json()
       if (!res.ok) {
         toast.error('동기화 실패. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+      if (data.needs_confirmation) {
+        setConflicts(data.conflicts)
+        setConflictDialogOpen(true)
         return
       }
       if (data.synced === 0) toast.success('새로운 러닝 기록이 없습니다.')
@@ -61,7 +73,7 @@ export function StreakView() {
         <div className="flex items-center gap-2">
           {stravaConnected && (
             <button
-              onClick={syncStrava}
+              onClick={() => syncStrava()}
               disabled={syncing}
               className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
               aria-label="Strava 동기화"
@@ -76,6 +88,14 @@ export function StreakView() {
       </div>
 
       <PersonalStatsDialog open={statsOpen} onClose={() => setStatsOpen(false)} openCount={statsOpenCount} />
+
+      <StravaConflictDialog
+        open={conflictDialogOpen}
+        conflicts={conflicts}
+        onSkip={() => { setConflictDialogOpen(false); syncStrava({ skip_dates: conflicts.map(c => c.date) }) }}
+        onAddAll={() => { setConflictDialogOpen(false); syncStrava({ skip_dates: [] }) }}
+        onCancel={() => setConflictDialogOpen(false)}
+      />
 
       {/* 이번 달 통계 */}
       <MonthStats dayMap={dayMap} rolling={rolling} loading={loading} yearMonth={yearMonth} />
