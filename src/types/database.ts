@@ -242,6 +242,33 @@ export interface Database {
         }
         Relationships: []
       }
+      strava_syncs: {
+        Row: {
+          id: string
+          user_id: string
+          synced_at: string
+          synced_count: number
+          run_ids: string[]
+          prev_last_synced_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          synced_at?: string
+          synced_count: number
+          run_ids: string[]
+          prev_last_synced_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          synced_at?: string
+          synced_count?: number
+          run_ids?: string[]
+          prev_last_synced_at?: string | null
+        }
+        Relationships: []
+      }
       strava_connections: {
         Row: {
           user_id: string

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { RefreshCw, Loader2, Unlink, CheckCircle2 } from 'lucide-react'
+import { RefreshCw, Loader2, Unlink, CheckCircle2, RotateCcw } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,12 @@ interface StravaStatus {
   connected: boolean
   athlete_name?: string | null
   last_synced_at?: string | null
+}
+
+interface LastSync {
+  id: string
+  synced_count: number
+  synced_at: string
 }
 
 function formatSyncedAt(iso: string | null | undefined): string {
@@ -33,13 +39,19 @@ export function StravaSection() {
   const [syncing, setSyncing] = useState(false)
   const [disconnectOpen, setDisconnectOpen] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [lastSync, setLastSync] = useState<LastSync | null>(null)
+  const [rollbackOpen, setRollbackOpen] = useState(false)
+  const [rollingBack, setRollingBack] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/strava/status')
       .then(r => r.json())
       .then(setStatus)
 
-    // OAuth 콜백 결과 처리
+    fetch('/api/runs/strava-sync')
+      .then(r => r.json())
+      .then(data => setLastSync(data ?? null))
+
     const params = new URLSearchParams(window.location.search)
     const stravaParam = params.get('strava')
     if (stravaParam === 'connected') {
@@ -68,10 +80,36 @@ export function StravaSection() {
       const now = new Date().toISOString()
       setStatus(prev => prev ? { ...prev, last_synced_at: now } : prev)
 
-      if (data.synced === 0) toast.success('새로운 러닝 기록이 없습니다.')
-      else toast.success(`${data.synced}개의 러닝 기록을 가져왔습니다.`)
+      if (data.synced === 0) {
+        toast.success('새로운 러닝 기록이 없습니다.')
+        setLastSync(null)
+      } else {
+        toast.success(`${data.synced}개의 러닝 기록을 가져왔습니다.`)
+        // 최신 sync 정보 갱신
+        const syncRes = await fetch('/api/runs/strava-sync')
+        const syncData = await syncRes.json()
+        setLastSync(syncData ?? null)
+      }
     } finally {
       setSyncing(false)
+    }
+  }
+
+  async function rollback() {
+    setRollingBack(true)
+    try {
+      const res = await fetch('/api/runs/strava-sync', { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error('되돌리기 실패. 다시 시도해 주세요.')
+        return
+      }
+      toast.success(`${data.rolled_back}개의 기록이 삭제됐습니다.`)
+      setLastSync(null)
+      setStatus(prev => prev ? { ...prev, last_synced_at: undefined } : prev)
+    } finally {
+      setRollingBack(false)
+      setRollbackOpen(false)
     }
   }
 
@@ -136,6 +174,23 @@ export function StravaSection() {
         </div>
       )}
 
+      {/* 롤백 섹션 */}
+      {status?.connected && lastSync && (
+        <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            마지막 동기화 <span className="font-medium text-foreground">{lastSync.synced_count}개</span> 기록 · {formatSyncedAt(lastSync.synced_at)}
+          </p>
+          <button
+            onClick={() => setRollbackOpen(true)}
+            className="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors"
+          >
+            <RotateCcw className="h-3 w-3" />
+            되돌리기
+          </button>
+        </div>
+      )}
+
+      {/* 연동 해제 확인 */}
       <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -146,12 +201,32 @@ export function StravaSection() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setDisconnectOpen(false)}>
-              취소
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDisconnectOpen(false)}>취소</Button>
             <Button variant="destructive" size="sm" onClick={disconnect} disabled={disconnecting}>
               {disconnecting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
               해제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 롤백 확인 */}
+      <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>동기화 되돌리기</DialogTitle>
+            <DialogDescription className="text-left pt-1">
+              마지막 동기화로 가져온 <span className="font-medium text-foreground">{lastSync?.synced_count}개</span>의 러닝 기록이 모두 삭제됩니다.
+              이 작업은 취소할 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setRollbackOpen(false)} disabled={rollingBack}>
+              취소
+            </Button>
+            <Button variant="destructive" size="sm" onClick={rollback} disabled={rollingBack}>
+              {rollingBack ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              되돌리기
             </Button>
           </DialogFooter>
         </DialogContent>

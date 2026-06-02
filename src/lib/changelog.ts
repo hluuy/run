@@ -6,6 +6,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.0',
+    date: '2026-06-02',
+    features: [
+      '러닝화 마일리지 관리 — 신발별 누적 km 및 목표 진행률 표시',
+      '러닝 기록 시 신발 선택, Strava 동기화 시 대표 신발 자동 할당',
+      'Strava 동기화 되돌리기 — 마지막 동기화 기록 일괄 취소',
+    ],
+  },
+  {
     version: '1.11.0',
     date: '2026-05-21',
     features: [

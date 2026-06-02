@@ -6,6 +6,21 @@ import type { Split } from '@/types/database'
 
 const RUN_SPORT_TYPES = new Set(['Run', 'VirtualRun', 'TrailRun'])
 
+export async function GET() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('strava_syncs')
+    .select('id, synced_count, synced_at')
+    .eq('user_id', user.id)
+    .single()
+
+  return NextResponse.json(data ?? null)
+}
+
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -50,13 +65,13 @@ export async function POST() {
 
   let synced = 0
   let skipped = 0
+  const insertedRunIds: string[] = []
 
   for (const activity of runs) {
     const distance_km = activity.distance / 1000
     const duration_sec = activity.moving_time
     if (distance_km < 0.1 || duration_sec < 10) continue
 
-    // 상세 조회로 splits 가져오기
     let splits: Split[] | null = null
     const detailRes = await fetch(
       `https://www.strava.com/api/v3/activities/${activity.id}`,
@@ -73,7 +88,7 @@ export async function POST() {
       })) ?? null
     }
 
-    const { error } = await admin.from('runs').insert({
+    const { data: inserted, error } = await admin.from('runs').insert({
       user_id: user.id,
       workout_source_id: `strava-${activity.id}`,
       date: activity.start_date,
@@ -88,12 +103,13 @@ export async function POST() {
       splits,
       source: 'strava',
       shoe_id: defaultShoe?.id ?? null,
-    })
+    }).select('id').single()
 
     if (error) {
       if (error.code === '23505') skipped++
     } else {
       synced++
+      if (inserted) insertedRunIds.push(inserted.id)
     }
   }
 
@@ -102,7 +118,47 @@ export async function POST() {
     .update({ last_synced_at: new Date().toISOString() })
     .eq('user_id', user.id)
 
+  // 이전 sync 기록 삭제 후 새 기록 저장 (synced > 0일 때만)
+  await admin.from('strava_syncs').delete().eq('user_id', user.id)
+  if (synced > 0) {
+    await admin.from('strava_syncs').insert({
+      user_id: user.id,
+      synced_count: synced,
+      run_ids: insertedRunIds,
+      prev_last_synced_at: connection.last_synced_at,
+    })
+  }
+
   return NextResponse.json({ synced, skipped })
+}
+
+export async function DELETE() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+  const admin = createAdminClient()
+
+  const { data: sync } = await admin
+    .from('strava_syncs')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!sync) return NextResponse.json({ error: 'no_sync' }, { status: 404 })
+
+  if (sync.run_ids.length > 0) {
+    await admin.from('runs').delete().in('id', sync.run_ids).eq('user_id', user.id)
+  }
+
+  await admin
+    .from('strava_connections')
+    .update({ last_synced_at: sync.prev_last_synced_at })
+    .eq('user_id', user.id)
+
+  await admin.from('strava_syncs').delete().eq('user_id', user.id)
+
+  return NextResponse.json({ rolled_back: sync.synced_count })
 }
 
 interface StravaActivity {
