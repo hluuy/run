@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, Star, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import type { ShoeWithMileage } from '@/types'
 
 interface Props {
@@ -26,6 +27,9 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
   const [editTarget, setEditTarget] = useState('')
   const [saving, setSaving] = useState(false)
   const [showRetired, setShowRetired] = useState(false)
+  const [totalRunKm, setTotalRunKm] = useState<number | null>(null)
+  const [includeHistory, setIncludeHistory] = useState(false)
+  const supabase = createClient()
 
   async function fetchShoes() {
     const res = await fetch('/api/shoes')
@@ -35,6 +39,16 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
   useEffect(() => {
     if (open) fetchShoes()
   }, [open])
+
+  async function openAddForm() {
+    setAddOpen(true)
+    // 신발이 하나도 없는 경우에만 기존 기록 합산 옵션 제공
+    if (shoes.length === 0) {
+      const { data } = await supabase.from('runs').select('distance_km')
+      const total = Math.round((data?.reduce((sum, r) => sum + r.distance_km, 0) ?? 0) * 10) / 10
+      setTotalRunKm(total > 0 ? total : null)
+    }
+  }
 
   async function addShoe() {
     if (!addName.trim()) return
@@ -52,6 +66,7 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
     if (!res.ok) { toast.error('추가 실패'); return }
     setAddOpen(false)
     setAddName(''); setAddTarget('500'); setAddInitial('0')
+    setTotalRunKm(null); setIncludeHistory(false)
     await fetchShoes()
     onChanged()
     toast.success('러닝화가 추가됐습니다.')
@@ -220,6 +235,25 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
                 className="h-9 text-sm"
                 onKeyDown={e => e.key === 'Enter' && addShoe()}
               />
+              {totalRunKm !== null && (
+                <label className="flex items-start gap-2.5 rounded-lg bg-primary/5 border border-primary/20 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeHistory}
+                    onChange={e => {
+                      setIncludeHistory(e.target.checked)
+                      setAddInitial(e.target.checked ? String(totalRunKm) : '0')
+                    }}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <div>
+                    <p className="text-xs font-medium">이전 기록 포함하기</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      지금까지 뛴 <span className="font-medium text-foreground">{totalRunKm.toFixed(1)} km</span>를 초기 마일리지로 합산합니다.
+                    </p>
+                  </div>
+                </label>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">목표 km</Label>
@@ -235,7 +269,7 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
                   <Input
                     type="number"
                     value={addInitial}
-                    onChange={e => setAddInitial(e.target.value)}
+                    onChange={e => { setAddInitial(e.target.value); setIncludeHistory(false) }}
                     className="h-9 text-sm"
                   />
                 </div>
@@ -244,7 +278,7 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
                 <Button
                   size="sm" variant="outline"
                   className="flex-1 h-8 text-xs"
-                  onClick={() => { setAddOpen(false); setAddName(''); setAddTarget('500'); setAddInitial('0') }}
+                  onClick={() => { setAddOpen(false); setAddName(''); setAddTarget('500'); setAddInitial('0'); setTotalRunKm(null); setIncludeHistory(false) }}
                 >
                   취소
                 </Button>
@@ -260,7 +294,7 @@ export function ShoeManagerSheet({ open, onClose, onChanged }: Props) {
             </div>
           ) : (
             <button
-              onClick={() => setAddOpen(true)}
+              onClick={openAddForm}
               className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-3 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
             >
               <Plus className="h-4 w-4" /> 신발 추가
