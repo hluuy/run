@@ -51,7 +51,14 @@ async function handleActivityCreate(athleteId: number, activityId: number) {
   if (!connection) return
 
   const accessToken = await ensureFreshToken(connection)
-  if (!accessToken) return
+  if (!accessToken) {
+    await sendPushToUser(connection.user_id, {
+      title: 'Strava 연동 오류',
+      body: '재연동이 필요합니다. 설정에서 다시 연결해 주세요.',
+      url: '/settings',
+    })
+    return
+  }
 
   const res = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -165,6 +172,7 @@ async function handleActivityUpdate(athleteId: number, activityId: number) {
       duration_sec,
       avg_pace_sec_per_km: duration_sec / distance_km,
       avg_heart_rate_bpm: activity.average_heartrate ?? null,
+      is_treadmill: activity.trainer ?? false,
       elevation_gain_m: activity.total_elevation_gain ?? null,
       polyline: activity.map?.summary_polyline ?? null,
       splits,

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 // One-time endpoint to register the Strava webhook subscription.
 // Protected by ADMIN_SECRET header.
-// After calling this once and getting a subscription_id, you can delete this file.
+// Current subscription_id: 351058 (registered 2026-06-02)
 export async function POST(request: Request) {
   const secret = request.headers.get('x-admin-secret')
   if (secret !== process.env.ADMIN_SECRET) {
