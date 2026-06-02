@@ -10,9 +10,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-06-02',
     features: [
       'Strava 웹훅 — 새 러닝 기록 자동 동기화 (Strava에 기록 저장 시 즉시 반영)',
-      'Strava 활동 수정 시 앱 기록도 자동 업데이트',
+      'Strava 활동 수정 시 앱 기록도 자동 업데이트 (트레드밀 여부 포함)',
       'Strava 활동 삭제 시 연동된 러닝 기록도 자동 삭제',
       '웹훅으로 기록 추가 시 푸시 알림 발송',
+      'Strava 토큰 만료 시 재연동 안내 푸시 알림',
     ],
   },
   {
