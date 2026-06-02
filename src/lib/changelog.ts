@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.0',
+    date: '2026-06-02',
+    features: [
+      'Strava 웹훅 — 새 러닝 기록 자동 동기화 (Strava에 기록 저장 시 즉시 반영)',
+      'Strava 활동 삭제 시 연동된 러닝 기록도 자동 삭제',
+    ],
+  },
+  {
     version: '1.13.0',
     date: '2026-06-02',
     features: [
