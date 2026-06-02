@@ -7,6 +7,7 @@ import { StreakCalendar } from './streak-calendar'
 import { MonthStats } from './month-stats'
 import { AddRunSheet } from './add-run-sheet'
 import { PersonalStatsDialog } from './personal-stats-dialog'
+import { ShoeSection } from './shoe-section'
 import { toast } from 'sonner'
 
 function currentYearMonth() {
@@ -104,6 +105,9 @@ export function StreakView() {
           </div>
         ))}
       </div>
+
+      {/* 러닝화 마일리지 */}
+      <ShoeSection />
     </div>
   )
 }

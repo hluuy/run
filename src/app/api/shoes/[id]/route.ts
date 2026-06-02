@@ -3,36 +3,41 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
-const schema = z.object({
-  date: z.string().min(1),
-  distance_km: z.number().positive().max(200),
-  duration_sec: z.number().int().positive(),
-  avg_pace_sec_per_km: z.number().positive(),
-  avg_heart_rate_bpm: z.number().int().min(40).max(250).nullable().optional(),
-  shoe_id: z.string().uuid().nullable().optional(),
+const putSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  target_km: z.number().positive().max(10000).optional(),
+  initial_km: z.number().min(0).max(10000).optional(),
+  is_default: z.boolean().optional(),
+  is_retired: z.boolean().optional(),
 })
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = schema.safeParse(await request.json())
+  const body = putSchema.safeParse(await request.json())
   if (!body.success) return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
 
   const admin = createAdminClient()
+
+  if (body.data.is_default === true) {
+    await admin
+      .from('shoes')
+      .update({ is_default: false })
+      .eq('user_id', user.id)
+      .neq('id', id)
+  }
+
+  const updateData = { ...body.data }
+  if (body.data.is_retired === true) {
+    updateData.is_default = false
+  }
+
   const { error } = await admin
-    .from('runs')
-    .update({
-      date: new Date(`${body.data.date}T00:00:00+09:00`).toISOString(),
-      local_date_key: body.data.date,
-      distance_km: body.data.distance_km,
-      duration_sec: body.data.duration_sec,
-      avg_pace_sec_per_km: body.data.avg_pace_sec_per_km,
-      avg_heart_rate_bpm: body.data.avg_heart_rate_bpm ?? null,
-      ...(body.data.shoe_id !== undefined ? { shoe_id: body.data.shoe_id } : {}),
-    })
+    .from('shoes')
+    .update(updateData)
     .eq('id', id)
     .eq('user_id', user.id)
 
@@ -48,7 +53,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   const admin = createAdminClient()
   const { error } = await admin
-    .from('runs')
+    .from('shoes')
     .delete()
     .eq('id', id)
     .eq('user_id', user.id)

@@ -11,8 +11,9 @@ import { createClient } from '@/lib/supabase/client'
 import { RunForm } from './run-form'
 import type { DayData, Run } from '@/types'
 import type { Split } from '@/types/database'
-import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2, TrendingUp } from 'lucide-react'
+import { Heart, Timer, Zap, MapPin, Loader2, Pencil, Trash2, TrendingUp, Star } from 'lucide-react'
 import { toast } from 'sonner'
+import type { ShoeWithMileage } from '@/types'
 
 const RouteMap = dynamic(() => import('./route-map').then((m) => m.RouteMap), {
   ssr: false,
@@ -39,16 +40,19 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
-function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
+function RunCard({ run, index, total, onEdit, onDeleted, readOnly, shoes }: {
   run: Run; index: number; total: number
   onEdit: (run: Run) => void
   onDeleted: () => void
   readOnly?: boolean
+  shoes: ShoeWithMileage[]
 }) {
   const [points, setPoints] = useState<GpxPoint[] | null>(null)
   const [loadingGpx, setLoadingGpx] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [shoeId, setShoeId] = useState<string | null>(run.shoe_id ?? null)
+  const [shoePickerOpen, setShoePickerOpen] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -80,6 +84,29 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
     toast.success('기록이 삭제됐습니다.')
     onDeleted()
   }
+
+  async function changeShoe(newShoeId: string | null) {
+    const res = await fetch(`/api/runs/${run.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: run.local_date_key,
+        distance_km: run.distance_km,
+        duration_sec: run.duration_sec,
+        avg_pace_sec_per_km: run.avg_pace_sec_per_km,
+        avg_heart_rate_bpm: run.avg_heart_rate_bpm ?? null,
+        shoe_id: newShoeId,
+      }),
+    })
+    if (res.ok) {
+      setShoeId(newShoeId)
+      setShoePickerOpen(false)
+    } else {
+      toast.error('신발 변경 실패')
+    }
+  }
+
+  const currentShoe = shoes.find(s => s.id === shoeId)
 
   return (
     <div className="space-y-1">
@@ -152,7 +179,49 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
         {run.elevation_gain_m != null && (
           <StatRow icon={<TrendingUp className="h-4 w-4" />} label="누적 고도" value={`${Math.round(run.elevation_gain_m)} m`} />
         )}
+        {!readOnly && (
+          <div className="flex items-center justify-between py-2.5">
+            <div className="flex items-center gap-2.5 text-muted-foreground text-sm">
+              <span>👟</span>
+              <span>신발</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm">{currentShoe?.name ?? '없음'}</span>
+              <button
+                onClick={() => setShoePickerOpen(v => !v)}
+                className="text-xs text-primary hover:text-primary/80 transition-colors"
+              >
+                변경
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {shoePickerOpen && !readOnly && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <button
+            onClick={() => changeShoe(null)}
+            className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+              shoeId === null ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'
+            }`}
+          >
+            없음
+          </button>
+          {shoes.filter(s => !s.is_retired).map(s => (
+            <button
+              key={s.id}
+              onClick={() => changeShoe(s.id)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                shoeId === s.id ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'
+              }`}
+            >
+              {s.is_default && <Star className="h-2.5 w-2.5 fill-current" />}
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!hasMap && !run.is_treadmill && (
         <p className="text-xs text-muted-foreground px-1 pt-1">GPS 경로 없음</p>
@@ -188,6 +257,15 @@ function RunCard({ run, index, total, onEdit, onDeleted, readOnly }: {
 
 export function DayDetailSheet({ dayData, open, onClose, onRunAdded, readOnly }: DayDetailSheetProps) {
   const [editingRun, setEditingRun] = useState<Run | null>(null)
+  const [shoes, setShoes] = useState<ShoeWithMileage[]>([])
+
+  useEffect(() => {
+    if (open) {
+      fetch('/api/shoes')
+        .then(r => r.ok ? r.json() : [])
+        .then(setShoes)
+    }
+  }, [open])
 
   if (!dayData) return null
 
@@ -230,6 +308,7 @@ export function DayDetailSheet({ dayData, open, onClose, onRunAdded, readOnly }:
                 onEdit={setEditingRun}
                 onDeleted={() => { onRunAdded?.(); onClose() }}
                 readOnly={readOnly}
+                shoes={shoes}
               />
             ))}
           </div>

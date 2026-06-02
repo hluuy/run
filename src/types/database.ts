@@ -76,6 +76,7 @@ export interface Database {
           elevation_gain_m: number | null
           splits: Split[] | null
           source: 'manual' | 'shortcut' | 'gpx' | 'strava'
+          shoe_id: string | null
           created_at: string
         }
         Insert: {
@@ -94,6 +95,7 @@ export interface Database {
           elevation_gain_m?: number | null
           splits?: Split[] | null
           source?: 'manual' | 'shortcut' | 'gpx' | 'strava'
+          shoe_id?: string | null
           created_at?: string
         }
         Update: {
@@ -112,6 +114,40 @@ export interface Database {
           elevation_gain_m?: number | null
           splits?: Split[] | null
           source?: 'manual' | 'shortcut' | 'gpx' | 'strava'
+          shoe_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      shoes: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          target_km: number
+          initial_km: number
+          is_default: boolean
+          is_retired: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          target_km?: number
+          initial_km?: number
+          is_default?: boolean
+          is_retired?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          target_km?: number
+          initial_km?: number
+          is_default?: boolean
+          is_retired?: boolean
           created_at?: string
         }
         Relationships: []

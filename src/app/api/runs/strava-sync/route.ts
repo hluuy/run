@@ -24,6 +24,14 @@ export async function POST() {
   const accessToken = await ensureFreshToken(connection)
   if (!accessToken) return NextResponse.json({ error: 'token_refresh_failed' }, { status: 400 })
 
+  const { data: defaultShoe } = await admin
+    .from('shoes')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('is_default', true)
+    .eq('is_retired', false)
+    .single()
+
   // 첫 동기화: 30일, 이후: 마지막 동기화 - 1일 (Strava 업로드 지연 대응)
   const after = connection.last_synced_at
     ? Math.floor(new Date(connection.last_synced_at).getTime() / 1000) - 24 * 60 * 60
@@ -79,6 +87,7 @@ export async function POST() {
       elevation_gain_m: activity.total_elevation_gain ?? null,
       splits,
       source: 'strava',
+      shoe_id: defaultShoe?.id ?? null,
     })
 
     if (error) {

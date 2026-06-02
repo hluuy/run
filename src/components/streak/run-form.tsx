@@ -10,10 +10,10 @@ import { Label } from '@/components/ui/label'
 import { WheelPicker } from '@/components/ui/wheel-picker'
 import { DatePickerSheet } from '@/components/ui/date-picker-sheet'
 import { toast } from 'sonner'
-import { Loader2, Paperclip, X, Minus, Plus } from 'lucide-react'
+import { Loader2, Paperclip, X, Minus, Plus, Star } from 'lucide-react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { parseGpxFile, validateGpxFile } from '@/lib/gpx'
-import type { Run } from '@/types'
+import type { Run, ShoeWithMileage } from '@/types'
 
 interface RunFormProps {
   onSuccess?: () => void
@@ -40,6 +40,8 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const isEdit = !!editRun
+  const [shoes, setShoes] = useState<ShoeWithMileage[]>([])
+  const [shoeId, setShoeId] = useState<string | null>(editRun?.shoe_id ?? null)
 
   // 거리 피커 상태
   const initKm = editRun?.distance_km ?? 5.00
@@ -73,6 +75,19 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
     resolver: zodResolver(runSchema),
     defaultValues,
   })
+
+  useEffect(() => {
+    fetch('/api/shoes')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: ShoeWithMileage[]) => {
+        const active = data.filter(s => !s.is_retired)
+        setShoes(active)
+        if (!editRun) {
+          const def = active.find(s => s.is_default)
+          if (def) setShoeId(def.id)
+        }
+      })
+  }, [editRun?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateValue = watch('date')
   const heartRate = watch('avg_heart_rate_bpm')
@@ -148,6 +163,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
           duration_sec,
           avg_pace_sec_per_km,
           avg_heart_rate_bpm: values.avg_heart_rate_bpm ?? null,
+          shoe_id: shoeId,
         }),
       })
       setLoading(false)
@@ -172,6 +188,7 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
       avg_pace_sec_per_km,
       avg_heart_rate_bpm: values.avg_heart_rate_bpm ?? null,
       source: gpxFile ? 'gpx' : 'manual',
+      shoe_id: shoeId,
     }).select('id').single()
 
     if (runError || !run) {
@@ -322,6 +339,41 @@ export function RunForm({ onSuccess, editRun }: RunFormProps) {
         </div>
         {errors.avg_heart_rate_bpm && <p className="text-xs text-destructive">{errors.avg_heart_rate_bpm.message}</p>}
       </div>
+
+      {/* 신발 선택 */}
+      {shoes.length > 0 && (
+        <div className="space-y-1.5">
+          <Label>러닝화 <span className="text-muted-foreground">(선택)</span></Label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setShoeId(null)}
+              className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                shoeId === null
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              없음
+            </button>
+            {shoes.map(shoe => (
+              <button
+                key={shoe.id}
+                type="button"
+                onClick={() => setShoeId(shoe.id)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                  shoeId === shoe.id
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                {shoe.is_default && <Star className="h-2.5 w-2.5 fill-current" />}
+                {shoe.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Button
         type="submit"

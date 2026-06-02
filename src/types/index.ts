@@ -6,6 +6,11 @@ export type Group = Database['public']['Tables']['groups']['Row']
 export type GroupMember = Database['public']['Tables']['group_members']['Row']
 export type Invite = Database['public']['Tables']['invites']['Row']
 export type ApiToken = Database['public']['Tables']['api_tokens']['Row']
+export type Shoe = Database['public']['Tables']['shoes']['Row']
+
+export interface ShoeWithMileage extends Shoe {
+  current_km: number
+}
 
 export interface DayData {
   localDateKey: string
